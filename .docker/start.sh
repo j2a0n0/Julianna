@@ -31,6 +31,7 @@ load_secret_file JULIANNA_EMAIL_SMTP_PASSWORD
 load_secret_file JULIANNA_REDIS_PASSWORD
 load_secret_file JULIANNA_S3_KEY
 load_secret_file JULIANNA_S3_SECRET
+load_secret_file JULIANNA_AI_API_KEY
 
 if [ "${JULIANNA_ENV:-production}" = "production" ]; then
     if ! php -r '

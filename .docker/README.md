@@ -48,6 +48,16 @@ The compose file exposes port 8080 for the reverse proxy and does not terminate
 TLS itself. Optional services such as SMTP, Redis, S3, Slack, Telegram, and
 Sentry remain disabled unless corresponding `JULIANNA_*` values are supplied.
 
+## Idea Room AI
+
+Idea Room is available to authenticated users at `/idea-room`. It shows a setup
+message until `JULIANNA_AI_PROVIDER` (`openai` or `anthropic`),
+`JULIANNA_AI_MODEL`, and `JULIANNA_AI_API_KEY` are configured. Configure these
+only on the server; the browser never receives credentials. For container
+secrets, mount a readable file and set `JULIANNA_AI_API_KEY_FILE` to its path.
+Provider requests are made only when a user sends a message; approving a plan
+does not call the provider.
+
 ## Secret files
 
 The entrypoint accepts Docker/Kubernetes secret files for sensitive settings.
