@@ -56,7 +56,7 @@
 
     </div>
     <div class="juliannaLogo">
-        <img style="height: 25px;" src="{!! BASE_URL !!}/dist/images/logo-powered-by-julianna.svg" alt="Powered by Julianna">
+        <img style="height: 25px;" src="{!! BASE_URL !!}/dist/images/logo-footer-julianna.svg" alt="Julianna">
     </div>
 </div>
 

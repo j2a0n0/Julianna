@@ -12,7 +12,8 @@ leantime.tourFactory = (function () {
                 classes: 'shepherd-theme-arrows',
                 scrollTo: false,
                 cancelIcon: {
-                    enabled: true
+                    enabled: true,
+                    label: leantime.i18n.__("tour.close")
                 }
             },
             tourName: tourName
@@ -38,236 +39,242 @@ leantime.tourFactory = (function () {
      * @returns {Array} - Array of tour step definitions
      */
     var getTourDefinition = function(tourName) {
+        const translate = function(key) {
+            return leantime.i18n.__("tour.guide." + key);
+        };
+        const linkedText = function(key) {
+            return translate(key).replace('%s', leantime.appUrl);
+        };
         const tourDefinitions = {
             'myWorkDashboard': [
                 {
                     id: "welcome-step",
-                    title: "👋 Welcome to the Dashboard Tour",
-                    text: "Let's start with a few basics to get you up to speed on the navigation and different elements inside Julianna.",
+                    title: translate('my_work.welcome.title'),
+                    text: translate('my_work.welcome.text'),
                 },
                 {
                     id: "top-nav-step",
-                    title: "Work Modes",
-                    text: "The top navigation shows you the current 'work mode' you're in. You can be inside a project, your personal work area, or in the company mode.",
+                    title: translate('my_work.modes.title'),
+                    text: translate('my_work.modes.text'),
                     attachTo: { element: '.work-modes', on: 'bottom' }
                 },
                 {
                     id: "menu-step",
-                    title: "Left Navigation",
-                    text: "The left navigation breaks down the current work mode and gives you access to different areas. Everything presented here is part of the currently selected work mode above.",
+                    title: translate('my_work.navigation.title'),
+                    text: translate('my_work.navigation.text'),
                     attachTo: { element: '.leftpanel', on: 'right' }
                 },
                 {
                     id: "my-menu",
-                    title: "My Profile Bar",
-                    text: "Here you'll find links to your account as well as your notifications.",
+                    title: translate('my_work.profile.title'),
+                    text: translate('my_work.profile.text'),
                     attachTo: { element: '.headmenu.pull-right', on: 'bottom' }
                 },
                 {
                     id: "dashboard-widgets",
-                    title: "Your Dashboard Widgets",
-                    text: "Your dashboard is broken up into various widgets showing you focused information about your work.",
+                    title: translate('my_work.widgets.title'),
+                    text: translate('my_work.widgets.text'),
                     attachTo: { element: '.primaryContent', on: 'top' }
                 },
                 {
                     id: "dashboard-widgets-dandd",
-                    title: "Customize Your Dashboard",
-                    text: "Widgets can be resized and moved around using the drag and drop functionality.",
+                    title: translate('my_work.customize.title'),
+                    text: translate('my_work.customize.text'),
                     attachTo: { element: '#widget_wrapper_todos .grid-handler-top', on: 'bottom' }
                 },
                 {
                     id: "my-todo-widget",
-                    title: "My To-Dos",
-                    text: "The My To-Do widget shows you all the tasks that are currently assigned to you.",
+                    title: translate('my_work.tasks.title'),
+                    text: translate('my_work.tasks.text'),
                     attachTo: { element: '#widget_wrapper_todos', on: 'top' }
                 },
                 {
                     id: "my-todo-widget2",
-                    title: "Group To-Dos",
-                    text: "You can use the dropdowns here to filter your tasks by project or group them by priority, status, project, or dates.",
+                    title: translate('my_work.group.title'),
+                    text: translate('my_work.group.text'),
                     attachTo: { element: '#yourToDoContainer > .clear', on: 'bottom' }
                 },
                 {
                     id: "my-todo-widget4",
-                    title: "Sort To-Dos",
-                    text: "Each To-Do can be dragged and dropped to change its order. You can also drag and drop a task to the calendar to schedule it.",
+                    title: translate('my_work.sort.title'),
+                    text: translate('my_work.sort.text'),
                     attachTo: { element: '#yourToDoContainer .sortable-item:first-child', on: 'bottom' }
                 },
                 {
                     id: "my-todo-widget-timer",
-                    title: "Start the Timer",
-                    text: "When you're ready to start working on a task, just click the start timer button.",
+                    title: translate('my_work.timer.title'),
+                    text: translate('my_work.timer.text'),
                     attachTo: { element: '#yourToDoContainer .sortable-item:first-child .timerContainer', on: 'bottom' }
                 },
                 {
                     id: "my-todo-widget-complete",
-                    title: "Complete a Task",
-                    text: "Once a task is complete, you can mark it as done by clicking the status dropdown.",
+                    title: translate('my_work.complete.title'),
+                    text: translate('my_work.complete.text'),
                     attachTo: { element: '#yourToDoContainer .sortable-item:first-child .statusDropdown', on: 'bottom' }
                 },
                 {
                     id: "my-todo-widget-add",
-                    title: "Add More Tasks",
-                    text: "You can add more tasks by clicking the plus button in each section, or by using the 3-dot menu next to each task.",
+                    title: translate('my_work.add.title'),
+                    text: translate('my_work.add.text'),
                     attachTo: { element: '#yourToDoContainer .fa-circle-plus', on: 'bottom' }
                 },
                 {
                     id: "finish",
-                    title: "Congratulations!",
-                    text: "You've completed the My Work dashboard tour. Head to <a href='"+leantime.appUrl+"/dashboard/show'>your project</a> to learn more about project management in Julianna.",
+                    title: translate('complete.title'),
+                    text: linkedText('my_work.finish.text'),
                 },
             ],
             'projectDashboard': [
                 {
                     id: "left-nav",
-                    title: "Project Menu",
-                    text: "The project menu organizes your project into different sections: <strong>Data Room</strong> - to host all your files and information, <strong>Think</strong> - to strategize, ideate and define, <strong>Make</strong> - to manage goals, milestones and tasks.",
+                    title: translate('project.menu.title'),
+                    text: translate('project.menu.text'),
                     attachTo: { element: '.leftmenu ul', on: 'left' }
                 },
                 {
                     id: 'project-selector',
-                    title: "Project Selector",
-                    text: "Use the project selector to jump between projects. The left menu shows everything related to your current project.",
+                    title: translate('project.selector.title'),
+                    text: translate('project.selector.text'),
                     attachTo: { element: '.bigProjectSelector', on: 'bottom' }
                 },
                 {
                     id: 'project-checklist',
-                    title: "Checklist",
-                    text: "The project checklist is a quick reference to see if your project contains all the necessary information for successful execution.",
+                    title: translate('project.checklist.title'),
+                    text: translate('project.checklist.text'),
                     attachTo: { element: '#progressForm', on: 'bottom' }
                 },
                 {
                     id: 'project-status',
-                    title: "Quick Status Updates",
-                    text: "You can use status updates to quickly share the progress of your project with your team using red, yellow and green colors. The status will be visible across the application.",
+                    title: translate('project.status.title'),
+                    text: translate('project.status.text'),
                     attachTo: { element: '.project-updates', on: 'left' }
                 },
                 {
                     id: 'project-progress',
-                    title: "Progress",
-                    text: "The project progress indicator shows you how much work you have completed. It accounts for various task sizes, team velocity, and project milestones.",
+                    title: translate('project.progress.title'),
+                    text: translate('project.progress.text'),
                     attachTo: { element: '.project-progress', on: 'left' }
                 },
                 {
                     id: 'latest-tasks',
-                    title: "Latest Tasks",
-                    text: "The list of latest tasks shows you the most recent tasks added to your project and can be used as a project inbox.",
+                    title: translate('project.latest.title'),
+                    text: translate('project.latest.text'),
                     attachTo: { element: '.latest-todos', on: 'left' }
                 },
                 {
                     id: 'teams',
-                    title: "Team",
-                    text: "The team box shows you the members of this project.",
+                    title: translate('project.team.title'),
+                    text: translate('project.team.text'),
                     attachTo: { element: '.team-container', on: 'top' }
                 },
                 {
                     id: 'finished',
-                    title: "Congratulations!",
-                    text: "You've completed the project dashboard tour. Head to the <a href='"+leantime.appUrl+"/tickets/showKanban'>To-Dos</a> to learn more about the various ways to manage your tasks in Julianna.",
+                    title: translate('complete.title'),
+                    text: linkedText('project.finish.text'),
                 }
             ],
             'kanbanBoard': [
                 {
                     id: 'kanban-overview',
-                    title: "Your Kanban Board",
-                    text: "This is your Kanban board. It helps you visualize your work and limit work-in-progress.",
+                    title: translate('kanban.overview.title'),
+                    text: translate('kanban.overview.text'),
                     attachTo: { element: '.kanban-board-wrapper', on: 'top' }
                 },
                 {
                     id: 'kanban-columns',
-                    title: "Work Flow",
-                    text: "Tasks move from left to right as they progress. Drag and drop cards to update their status.",
+                    title: translate('kanban.workflow.title'),
+                    text: translate('kanban.workflow.text'),
                     attachTo: { element: '.column', on: 'right' }
                 },
                 {
                     id: 'kanban-columns2',
-                    title: "Flexible Columns",
-                    text: "Using the 3-dot menu, you can add or remove columns and rename them.",
+                    title: translate('kanban.columns.title'),
+                    text: translate('kanban.columns.text'),
                     attachTo: { element: '.column .widgettitle .inlineDropDownContainer', on: 'right' }
                 },
                 {
                     id: 'kanban-filter',
-                    title: "Filter Tasks",
-                    text: "You can filter your tasks by various fields like priority, status, project, or dates.",
+                    title: translate('kanban.filter.title'),
+                    text: translate('kanban.filter.text'),
                     attachTo: { element: '.filterWrapper > .btn', on: 'bottom' }
                 },
                 {
                     id: 'kanban-group',
-                    title: "Swimlanes",
-                    text: "Additionally, you can group your tasks to create Kanban swimlanes. This helps you visualize your work by team members, priority, or milestones.",
+                    title: translate('kanban.swimlanes.title'),
+                    text: translate('kanban.swimlanes.text'),
                     attachTo: { element: '.filterWrapper > .btn-group', on: 'bottom' }
                 },
                 {
                     id: 'kanban-sprints',
-                    title: "Sprints",
-                    text: "If you manage your work in sprints, you can use the dropdown here to select, create, and update sprints.",
+                    title: translate('kanban.sprints.title'),
+                    text: translate('kanban.sprints.text'),
                     attachTo: { element: '.pageheader .dropdown', on: 'bottom' }
                 },
                 {
                     id: 'kanban-congrats',
-                    title: "Congratulations!",
-                    text: "This concludes the Kanban tour. Head to the <a href='"+leantime.appUrl+"/tickets/showKanban'>Milestones</a> to learn how to create and manage milestones in Julianna.",
+                    title: translate('complete.title'),
+                    text: linkedText('kanban.finish.text'),
                 }
             ],
             'milestoneView': [
                 {
                     id: 'milestone-overview',
-                    title: "Milestones",
-                    text: "Milestones help you track major outcomes and project phases.",
+                    title: translate('milestones.overview.title'),
+                    text: translate('milestones.overview.text'),
                     attachTo: { element: '.gantt-wrapper', on: 'top' }
                 },
                 {
                     id: 'milestone-drag',
-                    title: "Drag & Sort",
-                    text: "Each bar represents one milestone. You can drag them along the timeline, reorder, and resize them. Everything you do on this screen updates the timing of your milestones.",
+                    title: translate('milestones.drag.title'),
+                    text: translate('milestones.drag.text'),
                     attachTo: { element: '.gantt-wrapper', on: 'top' }
                 },
                 {
                     id: 'milestone-filter',
-                    title: "Filter",
-                    text: "You can filter your milestones and also view tasks that are part of them.",
+                    title: translate('milestones.filter.title'),
+                    text: translate('milestones.filter.text'),
                     attachTo: { element: '.filterWrapper > .btn', on: 'bottom' }
                 },
                 {
                     id: 'milestone-timeframes',
-                    title: "Timeframes",
-                    text: "You can change the timeframe of the timeline view to see more of the year or dive deep into a daily breakdown.",
+                    title: translate('milestones.timeframes.title'),
+                    text: translate('milestones.timeframes.text'),
                     attachTo: { element: '.col-md-4 .pull-right', on: 'bottom' }
                 },
                 {
                     id: 'milestone-congrats',
-                    title: "Congratulations!",
-                    text: "This concludes the milestone tour. Head to the <a href='"+leantime.appUrl+"/goalcanvas/dashboard'>Goals</a> to learn how to create and manage goals in Julianna.",
+                    title: translate('complete.title'),
+                    text: linkedText('milestones.finish.text'),
                 },
             ],
             'goalsView': [
                 {
                     id: 'goals-overview',
-                    title: "Goals",
-                    text: "Goals help you track measurable impact on your projects.",
+                    title: translate('goals.overview.title'),
+                    text: translate('goals.overview.text'),
                 },
                 {
                     id: 'goal-parts',
-                    title: "Objectives & Metrics",
-                    text: "Each goal is made up of an Objective (what you're trying to accomplish) and a Metric (how you'll measure it).",
+                    title: translate('goals.parts.title'),
+                    text: translate('goals.parts.text'),
                     attachTo: { element: '.ticketBox', on: 'top' }
                 },
                 {
                     id: 'goal-progress',
-                    title: "Goal Progress",
-                    text: "As you update your goal metrics, the progress bar will show you how far along you are.",
+                    title: translate('goals.progress.title'),
+                    text: translate('goals.progress.text'),
                     attachTo: { element: '.ticketBox > .row > .col-md-12 .progress', on: 'bottom' }
                 },
                 {
                     id: 'milestone-connection',
-                    title: "Milestones & Goals",
-                    text: "You can connect goals to milestones to track the task-level progress of your goals. This helps identify gaps in your project plan.",
+                    title: translate('goals.connection.title'),
+                    text: translate('goals.connection.text'),
                     attachTo: { element: '.ticketBox.fixed', on: 'bottom' }
                 },
                 {
                     id: 'milestone-congrats',
-                    title: "Congratulations!",
-                    text: "This concludes the goals tour. Milestones, Goals, and To-Dos are the basic building blocks in Julianna. Use them to break down your work into manageable chunks. Head to the <a href='"+leantime.appUrl+"/tickets/showKanban'>Kanban Board</a> to review your tasks.",
+                    title: translate('complete.title'),
+                    text: linkedText('goals.finish.text'),
                 },
             ]
         };
