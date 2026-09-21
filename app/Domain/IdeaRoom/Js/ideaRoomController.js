@@ -113,6 +113,7 @@
         var form = root.querySelector('#idea-room-plan-form');
         var messageForm = root.querySelector('#idea-room-message-form');
         var approveButton = root.querySelector('#idea-room-approve');
+        var archiveButton = root.querySelector('#idea-room-archive');
         var saveButton = root.querySelector('#idea-room-save');
         var result = root.querySelector('#idea-room-feedback');
         var statusElement = root.querySelector('#idea-room-status');
@@ -355,6 +356,21 @@
                     feedback(result, error.message || root.dataset.requestFailed, true);
                     setStatus(status);
                     approveButton.textContent = root.dataset.approveLabel;
+                }
+            });
+        }
+
+        if (archiveButton) {
+            archiveButton.addEventListener('click', async function () {
+                if (!window.confirm(root.dataset.confirmArchive)) { return; }
+                archiveButton.disabled = true;
+                feedback(result, '', false);
+                try {
+                    await request(root.dataset.archiveUrl, 'POST', {});
+                    window.location.reload();
+                } catch (error) {
+                    feedback(result, error.message || root.dataset.requestFailed, true);
+                    archiveButton.disabled = false;
                 }
             });
         }

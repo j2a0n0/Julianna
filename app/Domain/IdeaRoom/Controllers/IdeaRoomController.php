@@ -40,6 +40,7 @@ final class IdeaRoomController
         $this->template->assign('providerConfigured', $this->rooms->providerConfigured());
         $this->template->assign('canEdit', $this->rooms->canEdit($room));
         $this->template->assign('canApprove', $this->rooms->canApprove($room));
+        $this->template->assign('canArchive', $this->rooms->canArchive($room));
 
         return $this->template->display('idearoom.room');
     }
@@ -79,6 +80,11 @@ final class IdeaRoomController
     public function approve(int $id): Response
     {
         return $this->json(fn (): array => $this->rooms->approve($id));
+    }
+
+    public function archive(int $id): Response
+    {
+        return $this->json(fn (): array => $this->rooms->archive($id));
     }
 
     /** @param callable(): array<string, mixed> $action */

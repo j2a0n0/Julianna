@@ -10,5 +10,6 @@ Route::middleware([VerifyCsrfToken::class])->group(function (): void {
     Route::post('/idea-room/{id}/messages', [IdeaRoomController::class, 'send'])->whereNumber('id');
     Route::put('/idea-room/{id}/plan', [IdeaRoomController::class, 'savePlan'])->whereNumber('id');
     Route::post('/idea-room/{id}/approve', [IdeaRoomController::class, 'approve'])->whereNumber('id');
+    Route::post('/idea-room/{id}/archive', [IdeaRoomController::class, 'archive'])->whereNumber('id');
     Route::get('/idea-room/{id}', [IdeaRoomController::class, 'show'])->whereNumber('id')->name('idea-room.show');
 });

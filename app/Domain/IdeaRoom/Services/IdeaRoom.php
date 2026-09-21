@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use Leantime\Core\Auth\Permissions\PermissionService;
 use Leantime\Core\Exceptions\AuthorizationException;
 use Leantime\Core\Exceptions\NotFoundException;
+use Leantime\Core\Language;
 use Leantime\Domain\Auth\Models\Roles;
 use Leantime\Domain\Auth\Services\Auth;
 use Leantime\Domain\Goalcanvas\Permissions\GoalcanvasPermissions;
@@ -134,6 +135,12 @@ final class IdeaRoom
             ));
     }
 
+    /** @param array<string, mixed> $room */
+    public function canArchive(array $room): bool
+    {
+        return $this->canControl($room) && $room['status'] !== 'archived';
+    }
+
     /** @return array<string, mixed> */
     public function send(int $id, string $content): array
     {
@@ -156,7 +163,11 @@ final class IdeaRoom
             'content' => (string) $entry['content'],
         ], $this->rooms->messages($id));
         $projectContext = $room['project_id'] === null ? null : (string) ($room['project_name'] ?? '');
-        $reply = $provider->respond(new ChatRequest($transcript, $room['plan'], $projectContext, (string) (session('userdata.language') ?: 'fr-CH')));
+        $locale = (string) (session('usersettings.language') ?: session('companysettings.language') ?: 'en-US');
+        if (! in_array($locale, Language::SUPPORTED_LANGUAGES, true)) {
+            $locale = 'en-US';
+        }
+        $reply = $provider->respond(new ChatRequest($transcript, $room['plan'], $projectContext, $locale));
 
         return $this->rooms->transaction(function () use ($id, $reply, $message): array {
             $current = $this->rooms->lock($id) ?? throw new NotFoundException;
@@ -197,7 +208,7 @@ final class IdeaRoom
         return $this->rooms->transaction(function () use ($id): array {
             $room = $this->rooms->lock($id) ?? throw new NotFoundException;
             $this->authorizeRead($room);
-            if ($room['status'] === 'approved') {
+            if ($room['approvalResult'] !== null) {
                 return $room['approvalResult'] ?? throw new RuntimeException('Approved room has no result.');
             }
             if (! $this->canApprove($room)) {
@@ -289,6 +300,20 @@ final class IdeaRoom
             $this->rooms->approve($id, $projectId, $goalId, $result);
 
             return $result;
+        });
+    }
+
+    /** @return array{room: array{id: int, status: string}} */
+    public function archive(int $id): array
+    {
+        return $this->rooms->transaction(function () use ($id): array {
+            $room = $this->rooms->lock($id) ?? throw new NotFoundException;
+            $this->authorizeRead($room);
+            if ($room['status'] !== 'archived') {
+                $this->rooms->archive($id);
+            }
+
+            return ['room' => ['id' => $id, 'status' => 'archived']];
         });
     }
 

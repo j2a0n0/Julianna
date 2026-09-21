@@ -68,4 +68,9 @@ mkdir -p \
     /var/www/html/storage/framework/views \
     /var/www/html/storage/logs
 
+# These generated manifests live in the persistent storage volume. Rebuild them
+# after every image rollout so newly added domains and view composers are found.
+rm -f /var/www/html/storage/framework/viewPaths.php \
+    /var/www/html/storage/framework/composerPaths.php
+
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

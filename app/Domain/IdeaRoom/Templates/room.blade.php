@@ -22,6 +22,8 @@
      data-messages-url="{{ BASE_URL }}/idea-room/{{ $roomId }}/messages"
      data-plan-url="{{ BASE_URL }}/idea-room/{{ $roomId }}/plan"
      data-approve-url="{{ BASE_URL }}/idea-room/{{ $roomId }}/approve"
+     data-archive-url="{{ BASE_URL }}/idea-room/{{ $roomId }}/archive"
+     data-confirm-archive="{{ __('idea_room.confirm_archive') }}"
      data-can-edit="{{ $editable ? '1' : '0' }}"
      data-can-approve="{{ $approvable ? '1' : '0' }}"
      data-status="{{ $statusKey }}"
@@ -53,6 +55,9 @@
         <div class="idea-room-topline">
             <a href="{{ BASE_URL }}/idea-room" class="idea-room-back">&larr; {{ __('idea_room.all_rooms') }}</a>
             <span id="idea-room-status" class="idea-room-status idea-room-status--{{ $statusKey }}">{{ __('idea_room.status_'.$statusKey) }}</span>
+            @if ($canArchive ?? false)
+                <button type="button" id="idea-room-archive" class="idea-room-text-button">{{ __('idea_room.archive') }}</button>
+            @endif
         </div>
 
         @if (! ($providerConfigured ?? false))
