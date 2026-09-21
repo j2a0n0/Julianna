@@ -5,7 +5,7 @@ use Leantime\Core\Http\HttpKernel;
 define('RESTRICTED', true);
 define('ROOT', __DIR__);
 define('APP_ROOT', dirname(__DIR__, 1));
-define('LEAN_CLI', false);
+define('JULIANNA_CLI', false);
 
 require __DIR__.'/../vendor/autoload.php';
 

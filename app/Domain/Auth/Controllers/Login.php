@@ -2,109 +2,94 @@
 
 namespace Leantime\Domain\Auth\Controllers;
 
-use Illuminate\Contracts\Container\BindingResolutionException;
-use Leantime\Core\Configuration\Environment;
 use Leantime\Core\Controller\Controller;
-use Leantime\Core\Controller\Frontcontroller as FrontcontrollerCore;
-use Leantime\Domain\Auth\Services\Auth as AuthService;
+use Leantime\Core\Controller\Frontcontroller;
+use Leantime\Domain\Auth\Services\Auth as LegacyAuth;
+use Leantime\Domain\Auth\Support\SecureAuthRequest;
+use Leantime\Domain\JuliannaAuth\Services\JuliannaAuth;
 use Symfony\Component\HttpFoundation\Response;
 
-class Login extends Controller
+/** Password authentication is only the first half of a Julianna web login. */
+final class Login extends Controller
 {
-    private AuthService $authService;
+    private LegacyAuth $legacyAuth;
 
-    private Environment $config;
+    private JuliannaAuth $auth;
 
-    /**
-     * init - initialize private variables
-     */
-    public function init(
-        AuthService $authService,
-        Environment $config
-    ): void {
-        $this->authService = $authService;
-        $this->config = $config;
+    public function init(LegacyAuth $legacyAuth, JuliannaAuth $auth): void
+    {
+        $this->legacyAuth = $legacyAuth;
+        $this->auth = $auth;
     }
 
-    /**
-     * get - handle get requests
-     *
-     *
-     *
-     *
-     * @throws BindingResolutionException
-     */
     public function get(array $params): Response
     {
         self::dispatchEvent('beforeAuth', $params);
-
-        $return = self::dispatchFilter('beforeAuthHandling', $params);
-        if ($return instanceof Response) {
-            return $return;
+        $filtered = self::dispatchFilter('beforeAuthHandling', $params);
+        if ($filtered instanceof Response) {
+            return $filtered;
         }
 
-        // Guard the type: redirect[]=x arrives as an array, which would TypeError against
-        // resolveSafeRedirect(?string) and 500 the login page on malformed input.
         $rawRedirect = $_GET['redirect'] ?? null;
-        $redirectUrl = $this->authService->resolveSafeRedirect(is_string($rawRedirect) ? $rawRedirect : null);
+        $redirect = $this->legacyAuth->resolveSafeRedirect(is_string($rawRedirect) ? $rawRedirect : null);
 
-        $this->tpl->assign('inputPlaceholder', $this->authService->getLoginInputPlaceholder());
-        $this->tpl->assign('redirectUrl', urlencode($redirectUrl));
-        $this->tpl->assign('oidcEnabled', $this->config->oidcEnable);
-        $this->tpl->assign('noLoginForm', $this->authService->shouldHideLoginForm());
+        $this->tpl->assign('inputPlaceholder', 'input.placeholders.enter_email');
+        $this->tpl->assign('redirectUrl', urlencode($redirect));
+        // Julianna's first release has one enforced identity flow. Legacy LDAP
+        // and OIDC settings cannot create a session that bypasses mandatory MFA.
+        $this->tpl->assign('oidcEnabled', false);
+        $this->tpl->assign('noLoginForm', false);
 
         return $this->tpl->display('auth.login', 'entry');
     }
 
-    /**
-     * post - handle post requests
-     *
-     *
-     *
-     *
-     * @throws BindingResolutionException
-     */
     public function post(array $params): Response
     {
-        if (isset($_POST['username']) === true && isset($_POST['password']) === true) {
-
-            // Same array guard as the GET path above — redirectUrl[]=x must not 500 the login POST.
-            $rawRedirect = $_POST['redirectUrl'] ?? null;
-            $redirectUrl = $this->authService->resolveSafeRedirect(is_string($rawRedirect) ? $rawRedirect : null);
-
-            $username = trim($_POST['username']);
-            $password = $_POST['password'];
-
-            try {
-                // Allow login interruptions through events
-                self::dispatch_event('beforeAuthServiceCall', ['post' => $_POST]);
-
-            } catch (\Exception $e) {
-
-                $this->tpl->setNotification($e->getMessage(), 'error');
-
-                return FrontcontrollerCore::redirect(BASE_URL.'/auth/login');
-            }
-
-            // If login successful redirect to the correct url to avoid post on reload
-            if ($this->authService->login($username, $password) === true) {
-
-                self::dispatch_event('successfulLogin', ['post' => $_POST]);
-
-                if ($this->authService->use2FA()) {
-                    return FrontcontrollerCore::redirect(BASE_URL.'/auth/twoFA');
-                }
-
-                return FrontcontrollerCore::redirect($redirectUrl);
-            } else {
-                $this->tpl->setNotification('notifications.username_or_password_incorrect', 'error');
-
-                return FrontcontrollerCore::redirect(BASE_URL.'/auth/login');
-            }
-        } else {
-            $this->tpl->setNotification('notifications.username_or_password_missing', 'error');
-
-            return FrontcontrollerCore::redirect(BASE_URL.'/auth/login');
+        if (! SecureAuthRequest::hasValidCsrf($params)) {
+            return $this->failed();
         }
+
+        $email = is_string($params['username'] ?? null) ? $params['username'] : '';
+        $password = is_string($params['password'] ?? null) ? $params['password'] : '';
+        $rawRedirect = $params['redirectUrl'] ?? null;
+        $redirect = $this->legacyAuth->resolveSafeRedirect(
+            is_string($rawRedirect) ? urldecode($rawRedirect) : null
+        );
+
+        self::dispatchEvent('beforeAuthServiceCall', ['post' => $params]);
+        $account = $this->auth->authenticate($email, $password);
+        if ($account === false) {
+            return $this->failed();
+        }
+
+        // Re-authenticating in an existing browser revokes its previous local
+        // application state before the primary-authentication session rotation.
+        if (session()->exists('userdata')) {
+            $oldAccount = session('julianna_auth.authenticated_account_id');
+            if (is_numeric($oldAccount)) {
+                $this->auth->revokeSession(session()->getId());
+            }
+            $this->legacyAuth->logout();
+        }
+
+        SecureAuthRequest::clearPendingAuthentication();
+        session()->forget(['julianna_auth.authenticated_account_id', 'julianna_auth.session_version']);
+        SecureAuthRequest::rotateSession();
+        session()->put('julianna_auth.account_id', $account->id);
+        session()->put('julianna_auth.user_id', $account->userId);
+        session()->put('julianna_auth.redirect', $redirect);
+
+        self::dispatchEvent('successfulLogin', ['post' => ['username' => $email]]);
+
+        return Frontcontroller::redirect(BASE_URL.'/auth/mfa');
+    }
+
+    private function failed(): Response
+    {
+        // Identical for unknown, unverified, pending, rejected, disabled and
+        // wrong-password accounts to prevent state and account enumeration.
+        $this->tpl->setNotification('notifications.username_or_password_incorrect', 'error');
+
+        return Frontcontroller::redirect(BASE_URL.'/auth/login');
     }
 }

@@ -24,7 +24,7 @@ class Application extends \Illuminate\Console\Application
     {
 
         $parent = get_parent_class(\Illuminate\Console\Application::class);
-        $parent::__construct('Leantime CLI (extends Laravel)', $version);
+        $parent::__construct('Julianna CLI', $version);
 
         $this->laravel = $laravel;
         $this->events = $events;
@@ -90,6 +90,6 @@ class Application extends \Illuminate\Console\Application
 
     public static function artisanBinary()
     {
-        return ProcessUtils::escapeArgument('bin/leantime');
+        return ProcessUtils::escapeArgument('bin/julianna');
     }
 }

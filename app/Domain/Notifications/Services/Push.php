@@ -28,10 +28,10 @@ use Leantime\Domain\Notifications\Models\Notification as NotificationModel;
  *     push registration dies with it. No prune cron needed.
  *
  * Configuration (env / .env):
- *   - LEAN_PUSH_FCM_CREDENTIALS_PATH — absolute path to the Firebase
+ *   - JULIANNA_PUSH_FCM_CREDENTIALS_PATH — absolute path to the Firebase
  *     service-account JSON (downloaded from Firebase Console > Project
  *     Settings > Service Accounts > Generate New Private Key).
- *   - LEAN_PUSH_FCM_PROJECT_ID      — Firebase project id (the
+ *   - JULIANNA_PUSH_FCM_PROJECT_ID      — Firebase project id (the
  *     'project_id' field inside the same JSON works; this lets
  *     operators override it cleanly).
  *
@@ -49,7 +49,7 @@ class Push
      * Cache key for the FCM OAuth access token. Tokens are valid for
      * 3600s; we cache for 3540s (one minute of safety margin).
      */
-    private const FCM_TOKEN_CACHE_KEY = 'leantime.push.fcm.oauth_token';
+    private const FCM_TOKEN_CACHE_KEY = 'julianna.push.fcm.oauth_token';
 
     private const FCM_TOKEN_CACHE_TTL = 3540;
 
@@ -122,7 +122,7 @@ class Push
      */
     public function sendFromNotification(NotificationModel $notification, array $userIds): void
     {
-        $title = $notification->subject !== '' ? $notification->subject : 'Leantime';
+        $title = $notification->subject !== '' ? $notification->subject : 'Julianna';
         $body = $notification->message !== '' ? $notification->message : '';
 
         // Module is a literal string ('tickets'/'comments'/'goalcanvas'/…)
@@ -161,15 +161,15 @@ class Push
     }
 
     /**
-     * FCM HTTP v1 send. Requires LEAN_PUSH_FCM_CREDENTIALS_PATH and
-     * LEAN_PUSH_FCM_PROJECT_ID to be set. Silently no-ops if not
+     * FCM HTTP v1 send. Requires JULIANNA_PUSH_FCM_CREDENTIALS_PATH and
+     * JULIANNA_PUSH_FCM_PROJECT_ID to be set. Silently no-ops if not
      * configured — admins who haven't set up FCM shouldn't get errors
      * thrown at them; their pushes just don't deliver.
      */
     private function sendFcm($row, string $title, string $body, array $data): void
     {
-        $credentialsPath = (string) env('LEAN_PUSH_FCM_CREDENTIALS_PATH', '');
-        $projectId = (string) env('LEAN_PUSH_FCM_PROJECT_ID', '');
+        $credentialsPath = (string) env('JULIANNA_PUSH_FCM_CREDENTIALS_PATH', '');
+        $projectId = (string) env('JULIANNA_PUSH_FCM_PROJECT_ID', '');
         if ($credentialsPath === '' || $projectId === '' || ! is_readable($credentialsPath)) {
             return;
         }

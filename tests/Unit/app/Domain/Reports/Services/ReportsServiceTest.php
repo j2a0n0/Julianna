@@ -2,16 +2,12 @@
 
 namespace Unit\app\Domain\Reports\Services;
 
-use Leantime\Core\Configuration\AppSettings as AppSettingCore;
-use Leantime\Core\Configuration\Environment as EnvironmentCore;
 use Leantime\Domain\Projects\Repositories\Projects as ProjectRepository;
 use Leantime\Domain\Reports\Repositories\Reports as ReportRepository;
 use Leantime\Domain\Reports\Services\Reports;
-use Leantime\Domain\Setting\Services\Setting as SettingsService;
 use Leantime\Domain\Sprints\Models\Sprints as SprintModel;
 use Leantime\Domain\Sprints\Repositories\Sprints as SprintRepository;
 use Leantime\Domain\Sprints\Services\Sprints as SprintService;
-use Leantime\Domain\Tickets\Repositories\Tickets as TicketRepository;
 use Unit\TestCase;
 
 /**
@@ -55,20 +51,23 @@ class ReportsServiceTest extends TestCase
         }
     }
 
-    public function test_system_and_telemetry_methods_are_not_rpc_reachable(): void
+    public function test_system_methods_are_not_rpc_reachable_and_telemetry_is_absent(): void
     {
-        // dailyIngestion binds to session state; the others leak instance-wide aggregates or
-        // mutate company-wide settings. None may carry a line-starting @api tag.
         foreach ([
             'dailyIngestion',
             'cronDailyIngestion',
+        ] as $method) {
+            $this->assertFalse($this->isApiExposed($method), "$method must NOT be RPC-callable");
+        }
+
+        foreach ([
             'getAnonymousTelemetry',
             'sendAnonymousTelemetry',
             'optOutTelemetry',
             'getProjectStatusReport',
             'generateTicketReactionsReport',
         ] as $method) {
-            $this->assertFalse($this->isApiExposed($method), "$method must NOT be RPC-callable");
+            $this->assertFalse(method_exists(Reports::class, $method), "$method must be removed from Julianna");
         }
     }
 
@@ -80,13 +79,9 @@ class ReportsServiceTest extends TestCase
     private function makeService(SprintService $sprintService): Reports
     {
         return new Reports(
-            $this->make(AppSettingCore::class),
-            $this->make(EnvironmentCore::class),
             $this->make(ProjectRepository::class),
             $this->make(SprintRepository::class),
             $this->make(ReportRepository::class),
-            $this->make(SettingsService::class),
-            $this->make(TicketRepository::class),
             $sprintService,
         );
     }

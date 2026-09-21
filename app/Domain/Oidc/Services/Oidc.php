@@ -13,8 +13,8 @@ use Leantime\Core\Language;
 use Leantime\Domain\Auth\Services\Auth as AuthService;
 use Leantime\Domain\Users\Repositories\Users as UserRepository;
 use OpenSSLAsymmetricKey;
-use phpseclib3\Crypt\PublicKeyLoader;
-use phpseclib3\Math\BigInteger;
+use phpseclib4\Crypt\PublicKeyLoader;
+use phpseclib4\Math\BigInteger;
 use Symfony\Component\HttpFoundation\Response;
 
 class Oidc
@@ -318,7 +318,7 @@ class Oidc
             return false;
         }
 
-        return str_starts_with($redirect, 'leantime://');
+        return str_starts_with($redirect, 'julianna://');
     }
 
     private function getUserRole(array $userInfo, array $user = []): string

@@ -16,24 +16,6 @@ EventDispatcher::add_event_listener('leantime.core.console.consolekernel.schedul
     $reportService = app()->make(Services\Reports::class);
 
     $scheduler->call(function () use ($reportService) {
-
-        $telemetry = $reportService->sendAnonymousTelemetry();
-
-        if ($telemetry === false) {
-            return;
-        }
-
-        try {
-
-            $response = $telemetry->wait();
-
-        } catch (\Throwable $e) {
-            Log::error($e);
-        }
-
-    })->name('reports:telemetry')->daily();
-
-    $scheduler->call(function () use ($reportService) {
         $reportService->cronDailyIngestion();
     })->name('reports:dailyIngestion')->daily();
 

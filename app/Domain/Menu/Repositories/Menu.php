@@ -108,12 +108,13 @@ class Menu
                     10 => ['type' => 'item', 'module' => 'projects', 'role' => 'manager', 'title' => 'menu.all_projects', 'icon' => 'fa fa-fw fa-briefcase', 'tooltip' => 'menu.all_projects_tooltip', 'href' => '/projects/showAll', 'active' => ['showAll']],
                     15 => ['type' => 'item', 'module' => 'clients', 'role' => 'admin', 'title' => 'menu.all_clients', 'icon' => 'fa fa-fw fa-address-book', 'tooltip' => 'menu.all_clients_tooltip', 'href' => '/clients/showAll', 'active' => ['showAll']],
                     20 => ['type' => 'item', 'module' => 'users', 'role' => 'admin', 'title' => 'menu.all_users', 'icon' => 'fa fa-fw fa-users', 'tooltip' => 'menu.all_users_tooltip', 'href' => '/users/showAll', 'active' => ['showAll']],
+                    25 => ['type' => 'item', 'module' => 'users', 'role' => 'admin', 'title' => 'menu.signup_approvals', 'icon' => 'fa fa-fw fa-user-check', 'tooltip' => 'menu.signup_approvals_tooltip', 'href' => '/users/approvals', 'active' => ['approvals']],
                 ],
             ],
             15 => [
                 'type' => 'submenu', 'id' => 'administration', 'title' => 'menu.sidemenu_administration', 'visual' => 'open', 'role' => 'admin',
                 'submenu' => [
-                    5 => ['type' => 'item', 'module' => 'plugins', 'title' => 'menu.leantime_apps', 'icon' => 'fa fa-fw fa-puzzle-piece', 'tooltip' => 'menu.leantime_apps_tooltip', 'href' => '/plugins/marketplace', 'active' => ['marketplace', 'myapps']],
+                    5 => ['type' => 'item', 'module' => 'plugins', 'title' => 'menu.local_plugins', 'icon' => 'fa fa-fw fa-puzzle-piece', 'tooltip' => 'menu.local_plugins_tooltip', 'href' => '/plugins/myapps', 'active' => ['myapps']],
                     10 => ['type' => 'item', 'module' => 'connector', 'title' => 'menu.integrations', 'icon' => 'fa fa-fw fa-circle-nodes', 'tooltip' => 'menu.connector_tooltip', 'href' => '/connector/show', 'active' => ['show']],
                     15 => ['type' => 'item', 'module' => 'setting', 'title' => 'menu.company_settings', 'icon' => 'fa fa-fw fa-cogs', 'tooltip' => 'menu.company_settings_tooltip', 'href' => '/setting/editCompanySettings', 'active' => ['editCompanySettings']],
 

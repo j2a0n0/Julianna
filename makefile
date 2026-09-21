@@ -1,9 +1,6 @@
 VERSION := $(shell grep "appVersion" ./app/Core/Configuration/AppSettings.php |awk -F' = ' '{print substr($$2,2,length($$2)-3)}')
-TARGET_DIR:= ./target/leantime
+TARGET_DIR:= ./target/julianna
 DESC:=$(shell git log -1 --pretty=%B)
-
-DOCS_DIR:= ./builddocs
-DOCS_REPO:= git@github.com:Leantime/docs.git
 RUNNING_DOCKER_CONTAINERS:= $(shell docker ps -a -q)
 RUNNING_DOCKER_VOLUMES:= $(shell docker volume ls -q)
 
@@ -43,7 +40,7 @@ package: clean build
 
 	#prepare log file
 	mkdir -p $(TARGET_DIR)/storage/logs
-	touch $(TARGET_DIR)/storage/logs/leantime.log
+	touch $(TARGET_DIR)/storage/logs/julianna.log
 
 	mkdir -p $(TARGET_DIR)/userfiles
 	touch   $(TARGET_DIR)/userfiles/.gitkeep
@@ -77,67 +74,49 @@ package: clean build
 	find $(TARGET_DIR)/public/dist/js/ -depth -mindepth 1 ! -name "*compiled*" -exec rm -rf {} \;
 
 	#create zip files
-	cd target/leantime && zip -r -X ../"Leantime-v$(VERSION)$$1.zip" .
-	cd target/leantime && tar -zcvf ../"Leantime-v$(VERSION)$$1.tar.gz" .
-
-gendocs: # Requires github CLI (brew install gh)
-	# Delete the temporary docs directory if exists
-	rm -rf $(DOCS_DIR)
-
-	# Make a temporary directory for docs
-	mkdir -p $(DOCS_DIR)
-
-	# Clone the docs
-	git clone $(DOCS_REPO) $(DOCS_DIR)
-
-	# Generate the docs
-	phpDocumentor --config=phpdoc.xml
-	phpDocumentor --config=phpdoc-api.xml
-
-	php vendor/bin/leantime-documentor parse app --format=markdown --template=templates/markdown.php --output=builddocs/technical/hooks.md --memory-limit=-1
-
-pushdocs:
-	# create pull request
-	cd $(DOCS_DIR) && git switch -c "release/$(VERSION)"
-	cd $(DOCS_DIR) && git add -A
-	cd $(DOCS_DIR) && git commit -m "Generated docs release $(VERSION)"
-	cd $(DOCS_DIR) && git push --set-upstream origin "release/$(VERSION)"
-	cd $(DOCS_DIR) && gh pr create --title "release/$(VERSION) --body "
-
-	# Delete the temporary docs directory
-	rm -rf $(DOCS_DIR)
+	cd target/julianna && zip -r -X ../"Julianna-v$(VERSION)$$1.zip" .
+	cd target/julianna && tar -zcvf ../"Julianna-v$(VERSION)$$1.tar.gz" .
 
 clean:
 	rm -rf $(TARGET_DIR)
+
+release-check:
+	bash scripts/check-independent-release.sh
 
 run-dev: build-dev
 	docker compose --file .dev/docker-compose.yaml up --detach --build --remove-orphans
 
 acceptance-test: build-dev
 	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml up --detach --build --remove-orphans
-	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec leantime-dev php vendor/bin/codecept clean
-	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec leantime-dev php vendor/bin/codecept build
-	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec leantime-dev php vendor/bin/codecept run Acceptance --steps
+	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec julianna-dev php vendor/bin/codecept clean
+	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec julianna-dev php vendor/bin/codecept build
+	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec julianna-dev php vendor/bin/codecept run Acceptance --steps
 
 unit-test: build-dev
 	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml up --detach --build --remove-orphans
-	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec leantime-dev php vendor/bin/codecept build
-	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec leantime-dev php vendor/bin/codecept run Unit --steps
+	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec julianna-dev php vendor/bin/codecept build
+	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec julianna-dev php vendor/bin/codecept run Unit --steps
+
+test-translations: build-dev
+	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml up --detach --build --remove-orphans
+	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec julianna-dev php vendor/bin/codecept build
+	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec julianna-dev php vendor/bin/codecept run Unit tests/Unit/app/Core/LanguageCatalogTest.php --steps
+	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec julianna-dev php vendor/bin/codecept run Acceptance --group fr-ch-localization --steps
 
 api-test: build-dev
 	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml up --detach --build --remove-orphans
-	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec leantime-dev php vendor/bin/codecept build
-	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec leantime-dev php vendor/bin/codecept run Api --steps
+	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec julianna-dev php vendor/bin/codecept build
+	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec julianna-dev php vendor/bin/codecept run Api --steps
 
 acceptance-test-ci: build-dev
 	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml up --detach --build --remove-orphans
-	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec leantime-dev php vendor/bin/codecept build
-	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec leantime-dev php vendor/bin/codecept run Acceptance --steps
+	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec julianna-dev php vendor/bin/codecept build
+	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec julianna-dev php vendor/bin/codecept run Acceptance --steps
 
 bearer-api-test-ci: build-dev
 	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml up --detach --build --remove-orphans
-	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec leantime-dev php vendor/bin/codecept build
-	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec leantime-dev php vendor/bin/codecept run Acceptance --group bearer-api --steps
+	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec julianna-dev php vendor/bin/codecept build
+	docker compose --file .dev/docker-compose.yaml --file .dev/docker-compose.tests.yaml exec julianna-dev php vendor/bin/codecept run Acceptance --group bearer-api --steps
 
 codesniffer:
 	./vendor/squizlabs/php_codesniffer/bin/phpcs app -d memory_limit=1048M
@@ -175,4 +154,4 @@ clear-cache:
 	find ./storage/framework/views -type d -empty -delete
 
 
-.PHONY: install-deps build-js build package clean run-dev
+.PHONY: install-deps build-js build package clean release-check run-dev

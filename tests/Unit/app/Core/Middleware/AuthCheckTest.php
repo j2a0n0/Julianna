@@ -88,21 +88,11 @@ class AuthCheckTest extends \Unit\TestCase
         $this->assertSame(7, session('userdata.id'), 'existing userdata must be left untouched');
     }
 
-    /**
-     * The mobile SSO exchange (/oidc/mobile/exchange) arrives with no session
-     * cookie — the validated one-time code + PKCE verifier are the authorization —
-     * so it must be allow-listed as public. Guards that allow-list from regressing.
-     */
-    public function test_oidc_mobile_exchange_is_a_public_route(): void
+    public function test_legacy_oidc_routes_are_not_public(): void
     {
         $authCheck = $this->make(AuthCheck::class);
 
-        $this->assertTrue(
-            $authCheck->isPublicController('oidc.mobile.exchange'),
-            'the mobile exchange endpoint must be public (no session at exchange time)'
-        );
-
-        // Negative control: an oidc sub-route that is NOT allow-listed stays private.
+        $this->assertFalse($authCheck->isPublicController('oidc.mobile.exchange'));
         $this->assertFalse($authCheck->isPublicController('oidc.settings.save'));
     }
 
@@ -114,5 +104,16 @@ class AuthCheckTest extends \Unit\TestCase
         // login methods, so the route must be public.
         $this->assertTrue($authCheck->isPublicController('status.index'));
         $this->assertTrue($authCheck->isPublicController('status'));
+    }
+
+    public function test_julianna_account_bootstrap_routes_are_public_but_admin_approval_is_not(): void
+    {
+        $authCheck = $this->make(AuthCheck::class);
+
+        foreach (['auth.register', 'auth.verifyEmail.token', 'auth.pending', 'auth.mfa', 'auth.recovery'] as $route) {
+            $this->assertTrue($authCheck->isPublicController($route), $route.' must support pre-authentication access');
+        }
+
+        $this->assertFalse($authCheck->isPublicController('users.approvals'));
     }
 }

@@ -3,7 +3,7 @@
 # It is not to be used for development
 #
 services:
-  leantime-dev:
+  julianna-dev:
     volumes:
       - "../:/var/www/html"
       - "./xdebug.ini:/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini"
@@ -13,15 +13,15 @@ services:
       - "8002:8080"
       - "44302:443"
     environment:
-      LEAN_ENV: 'testing'
-      LEAN_DB_HOST: 'leantime-db'
-      LEAN_DB_DATABASE: 'leantime_test'
+      JULIANNA_ENV: 'testing'
+      JULIANNA_DB_HOST: 'julianna-db'
+      JULIANNA_DB_DATABASE: 'julianna_test'
     env_file:
       - test.env
     depends_on:
-      leantime-db:
+      julianna-db:
         condition: service_healthy
 
-  leantime-db:
+  julianna-db:
     environment:
-      MYSQL_DATABASE: leantime_test
+      MYSQL_DATABASE: julianna_test

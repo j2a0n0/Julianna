@@ -47,7 +47,7 @@
 
     <x-global::accordion id="myProjectsHub-favorites" class="noBackground">
         <x-slot name="title">
-            ⭐ My Favorites
+            {{ __('text.my_favorites') }}
         </x-slot>
         <x-slot name="content">
             <div class="row">
@@ -66,7 +66,7 @@
                 @endforeach
                 @if($hasFavorites === false)
                     <div style="color:var(--main-action-color)">
-                        You don't have any favorites. 😿
+                        {{ __('text.no_favorites') }}
                     </div>
                 @endif
             </div>
@@ -76,7 +76,7 @@
 
     <x-global::accordion id="myProjectsHub-otherProjects" class="noBackground">
         <x-slot name="title">
-            🗂️ All Assigned Projects
+            {{ __('text.all_assigned_projects') }}
         </x-slot>
         <x-slot name="content">
 
@@ -95,5 +95,4 @@
         </x-slot>
     </x-global::accordion>
 </div>
-
 

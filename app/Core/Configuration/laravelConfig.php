@@ -57,75 +57,78 @@ return [
             Illuminate\Foundation\Providers\ComposerServiceProvider::class,
 
         ],
-        'name' => env('LEAN_SITENAME', 'Leantime'),
-        'locale' => env('LEAN_LANGUAGE', 'en-US'),
-        'url' => env('LEAN_APP_URL', ''),
-        'timezone' => env('LEAN_DEFAULT_TIMEZONE', 'America/Los_Angeles'),
-        'env' => env('LEAN_ENV', ''),
-        'debug' => env('LEAN_DEBUG', 0),
-        'key' => env('LEAN_SESSION_PASSWORD', '123'),
+        'name' => env('JULIANNA_SITENAME', 'Julianna'),
+        'locale' => env('JULIANNA_LANGUAGE', 'en-US'),
+        'url' => env('JULIANNA_APP_URL', ''),
+        'source_url' => env('JULIANNA_SOURCE_URL', ''),
+        'version' => env('JULIANNA_VERSION', '1.0.0-dev'),
+        'commit' => env('JULIANNA_COMMIT', 'unknown'),
+        'timezone' => env('JULIANNA_DEFAULT_TIMEZONE', 'Europe/Zurich'),
+        'env' => env('JULIANNA_ENV', 'production'),
+        'debug' => env('JULIANNA_DEBUG', 0),
+        'key' => env('JULIANNA_APP_KEY', ''),
     ],
     'debug_blacklist' => [
         '_ENV' => [
-            'LEAN_EMAIL_SMTP_PASSWORD',
-            'LEAN_DB_PASSWORD',
-            'LEAN_SESSION_PASSWORD',
-            'LEAN_OIDC_CLIENT_SECRET',
-            'LEAN_S3_SECRET',
-            'LEAN_S3_KEY',
-            'LEAN_EMAIL_SMTP_USERNAME',
-            'LEAN_ACCOUNTS_DB_NAME',
-            'LEAN_STRIPE_KEY',
-            'LEAN_ACCOUNTS_DB_PASSWORD',
-            'LEAN_STRIPE_SECRET',
-            'LEAN_MAINKEY',
-            'LEAN_BEDROCK_SECRET',
-            'LEAN_CRISP_IDENTIFIER',
-            'LEAN_CRISP_WEBSITE_ID',
-            'LEAN_CRISP_KEY',
-            'LEAN_SENTRY_DSN',
-            'LEAN_BEDROCK_KEY',
-            'LEAN_DB_DATABASE',
-            'LEAN_MAINKEY',
-            'LEAN_ACCOUNTS_DB_HOST',
-            'LEAN_REDIS_HOST',
-            'LEAN_DB_USER',
-            'LEAN_DB_HOST',
-            'LEAN_BEDROCK_AGENT',
-            'LEAN_BEDROCK_AGENT_ALIAS',
-            'LEAN_ACCOUNTS_DB_USER',
+            'JULIANNA_EMAIL_SMTP_PASSWORD',
+            'JULIANNA_DB_PASSWORD',
+            'JULIANNA_APP_KEY',
+            'JULIANNA_OIDC_CLIENT_SECRET',
+            'JULIANNA_S3_SECRET',
+            'JULIANNA_S3_KEY',
+            'JULIANNA_EMAIL_SMTP_USERNAME',
+            'JULIANNA_ACCOUNTS_DB_NAME',
+            'JULIANNA_STRIPE_KEY',
+            'JULIANNA_ACCOUNTS_DB_PASSWORD',
+            'JULIANNA_STRIPE_SECRET',
+            'JULIANNA_MAINKEY',
+            'JULIANNA_BEDROCK_SECRET',
+            'JULIANNA_CRISP_IDENTIFIER',
+            'JULIANNA_CRISP_WEBSITE_ID',
+            'JULIANNA_CRISP_KEY',
+            'JULIANNA_SENTRY_DSN',
+            'JULIANNA_BEDROCK_KEY',
+            'JULIANNA_DB_DATABASE',
+            'JULIANNA_MAINKEY',
+            'JULIANNA_ACCOUNTS_DB_HOST',
+            'JULIANNA_REDIS_HOST',
+            'JULIANNA_DB_USER',
+            'JULIANNA_DB_HOST',
+            'JULIANNA_BEDROCK_AGENT',
+            'JULIANNA_BEDROCK_AGENT_ALIAS',
+            'JULIANNA_ACCOUNTS_DB_USER',
             'username',
             'password',
             'host',
         ],
         '_SERVER' => [
-            'LEAN_EMAIL_SMTP_PASSWORD',
-            'LEAN_DB_PASSWORD',
-            'LEAN_SESSION_PASSWORD',
-            'LEAN_OIDC_CLIENT_SECRET',
-            'LEAN_S3_SECRET',
-            'LEAN_S3_KEY',
-            'LEAN_EMAIL_SMTP_USERNAME',
-            'LEAN_ACCOUNTS_DB_NAME',
-            'LEAN_STRIPE_KEY',
-            'LEAN_ACCOUNTS_DB_PASSWORD',
-            'LEAN_STRIPE_SECRET',
-            'LEAN_MAINKEY',
-            'LEAN_BEDROCK_SECRET',
-            'LEAN_CRISP_IDENTIFIER',
-            'LEAN_CRISP_WEBSITE_ID',
-            'LEAN_CRISP_KEY',
-            'LEAN_SENTRY_DSN',
-            'LEAN_BEDROCK_KEY',
-            'LEAN_DB_DATABASE',
-            'LEAN_MAINKEY',
-            'LEAN_ACCOUNTS_DB_HOST',
-            'LEAN_REDIS_HOST',
-            'LEAN_DB_USER',
-            'LEAN_DB_HOST',
-            'LEAN_BEDROCK_AGENT',
-            'LEAN_BEDROCK_AGENT_ALIAS',
-            'LEAN_ACCOUNTS_DB_USER',
+            'JULIANNA_EMAIL_SMTP_PASSWORD',
+            'JULIANNA_DB_PASSWORD',
+            'JULIANNA_APP_KEY',
+            'JULIANNA_OIDC_CLIENT_SECRET',
+            'JULIANNA_S3_SECRET',
+            'JULIANNA_S3_KEY',
+            'JULIANNA_EMAIL_SMTP_USERNAME',
+            'JULIANNA_ACCOUNTS_DB_NAME',
+            'JULIANNA_STRIPE_KEY',
+            'JULIANNA_ACCOUNTS_DB_PASSWORD',
+            'JULIANNA_STRIPE_SECRET',
+            'JULIANNA_MAINKEY',
+            'JULIANNA_BEDROCK_SECRET',
+            'JULIANNA_CRISP_IDENTIFIER',
+            'JULIANNA_CRISP_WEBSITE_ID',
+            'JULIANNA_CRISP_KEY',
+            'JULIANNA_SENTRY_DSN',
+            'JULIANNA_BEDROCK_KEY',
+            'JULIANNA_DB_DATABASE',
+            'JULIANNA_MAINKEY',
+            'JULIANNA_ACCOUNTS_DB_HOST',
+            'JULIANNA_REDIS_HOST',
+            'JULIANNA_DB_USER',
+            'JULIANNA_DB_HOST',
+            'JULIANNA_BEDROCK_AGENT',
+            'JULIANNA_BEDROCK_AGENT_ALIAS',
+            'JULIANNA_ACCOUNTS_DB_USER',
             'username',
             'password',
             'host',
@@ -147,7 +150,7 @@ return [
         |
         */
 
-        'default' => env('LEAN_USE_S3', false) ? 's3' : 'local',
+        'default' => env('JULIANNA_USE_S3', false) ? 's3' : 'local',
 
         /*
         |--------------------------------------------------------------------------
@@ -168,30 +171,30 @@ return [
                 'serve' => true,
                 'throw' => false,
                 'report' => false,
-                'renameFiles' => env('LEAN_FILESYSTEM_RENAME_FILES', true),
+                'renameFiles' => env('JULIANNA_FILESYSTEM_RENAME_FILES', true),
             ],
             'public' => [
                 'driver' => 'local',
                 'root' => public_path('userfiles'),
-                'url' => env('LEAN_APP_URL').'/userfiles',
+                'url' => env('JULIANNA_APP_URL').'/userfiles',
                 'visibility' => 'public',
                 'throw' => false,
                 'report' => false,
-                'renameFiles' => env('LEAN_FILESYSTEM_RENAME_FILES', true),
+                'renameFiles' => env('JULIANNA_FILESYSTEM_RENAME_FILES', true),
             ],
             's3' => [
                 'driver' => 's3',
-                'key' => env('LEAN_S3_KEY'),
-                'secret' => env('LEAN_S3_SECRET'),
-                'region' => env('LEAN_S3_REGION'),
-                'bucket' => env('LEAN_S3_BUCKET'),
-                'url' => env('LEAN_S3_URL') ?? env('LEAN_S3_END_POINT'),
-                'endpoint' => env('LEAN_S3_END_POINT'),
-                'use_path_style_endpoint' => env('LEAN_S3_USE_PATH_STYLE_ENDPOINT', false),
+                'key' => env('JULIANNA_S3_KEY'),
+                'secret' => env('JULIANNA_S3_SECRET'),
+                'region' => env('JULIANNA_S3_REGION'),
+                'bucket' => env('JULIANNA_S3_BUCKET'),
+                'url' => env('JULIANNA_S3_URL') ?? env('JULIANNA_S3_END_POINT'),
+                'endpoint' => env('JULIANNA_S3_END_POINT'),
+                'use_path_style_endpoint' => env('JULIANNA_S3_USE_PATH_STYLE_ENDPOINT', false),
                 'throw' => false,
                 'report' => false,
-                'prefix' => env('LEAN_S3_FOLDER_NAME', ''),
-                'renameFiles' => env('LEAN_FILESYSTEM_RENAME_FILES', true),
+                'prefix' => env('JULIANNA_S3_FOLDER_NAME', ''),
+                'renameFiles' => env('JULIANNA_FILESYSTEM_RENAME_FILES', true),
             ],
             'null' => [
                 'driver' => 'null',
@@ -227,27 +230,27 @@ return [
         'channels' => [
             'stack' => [
                 'driver' => 'stack',
-                'channels' => explode(',', env('LEAN_LOG_CHANNELS', 'single,syslog,sentry')),
+                'channels' => explode(',', env('JULIANNA_LOG_CHANNELS', 'single,syslog')),
                 'ignore_exceptions' => false,
             ],
             'single' => [
                 'driver' => 'daily',
-                'path' => storage_path('logs/leantime.log'),
-                'level' => env('LEAN_DEBUG', 0) ? 'debug' : 'error',
+                'path' => storage_path('logs/julianna.log'),
+                'level' => env('JULIANNA_DEBUG', 0) ? 'debug' : 'error',
                 'permission' => 0664,
                 'days' => 5,
                 'bubble' => true,
             ],
             'syslog' => [
                 'driver' => 'syslog',
-                'level' => env('LEAN_DEBUG', 0) ? 'debug' : 'error',
+                'level' => env('JULIANNA_DEBUG', 0) ? 'debug' : 'error',
                 'facility' => env('LOG_SYSLOG_FACILITY', LOG_USER),
                 'replace_placeholders' => true,
             ],
             // Deprecation notices are development signal — in production they only grew an
             // unrotated deprecations.log (#3589). Discard them unless debugging or explicitly
-            // enabled via LEAN_LOG_DEPRECATIONS.
-            'deprecations' => env('LEAN_LOG_DEPRECATIONS', env('LEAN_DEBUG', 0)) ? [
+            // enabled via JULIANNA_LOG_DEPRECATIONS.
+            'deprecations' => env('JULIANNA_LOG_DEPRECATIONS', env('JULIANNA_DEBUG', 0)) ? [
                 'driver' => 'single',
                 'path' => storage_path('logs/deprecations.log'),
             ] : [
@@ -256,7 +259,7 @@ return [
             ],
             'sentry' => [
                 'driver' => 'sentry',
-                'level' => env('LEAN_SENTRY_LOG_LEVEL', 'error'),
+                'level' => env('JULIANNA_SENTRY_LOG_LEVEL', 'error'),
                 'bubble' => true,
             ],
             'stderr' => [
@@ -265,7 +268,7 @@ return [
                 'with' => [
                     'stream' => 'php://stderr',
                 ],
-                'level' => env('LEAN_DEBUG', 0) ? 'debug' : 'error',
+                'level' => env('JULIANNA_DEBUG', 0) ? 'debug' : 'error',
             ],
         ],
         'default' => 'stack',
@@ -359,7 +362,7 @@ return [
         |
         */
 
-        'lifetime' => env('LEAN_SESSION_EXPIRATION', 480), // Session lifetime in MINUTES (passed straight to Laravel's `session.lifetime`). 480 = 8 hours. The Helm chart (`app.session.expiration` in helm/values.yaml) must use the same unit.
+        'lifetime' => env('JULIANNA_SESSION_EXPIRATION', 480), // Session lifetime in MINUTES (passed straight to Laravel's `session.lifetime`). 480 = 8 hours. The Helm chart (`app.session.expiration` in helm/values.yaml) must use the same unit.
 
         'expire_on_close' => false,
 
@@ -441,7 +444,7 @@ return [
         |
         */
 
-        'cookie' => 'leantime_session',
+        'cookie' => 'julianna_session',
 
         /*
         |--------------------------------------------------------------------------
@@ -480,7 +483,7 @@ return [
         |
         */
 
-        'secure' => env('LEAN_SESSION_SECURE', null),
+        'secure' => env('JULIANNA_SESSION_SECURE', true),
 
         /*
         |--------------------------------------------------------------------------
@@ -544,7 +547,7 @@ return [
 
     ],
     'database' => [
-        'default' => env('LEAN_DB_DEFAULT_CONNECTION', 'mysql'),
+        'default' => env('JULIANNA_DB_DEFAULT_CONNECTION', 'mysql'),
         /*
         |--------------------------------------------------------------------------
         | Database Connections
@@ -558,25 +561,25 @@ return [
         'connections' => [
             'sqlite' => [
                 'driver' => 'sqlite',
-                'url' => env('LEAN_DB_URL'),
+                'url' => env('JULIANNA_DB_URL'),
                 'database' => database_path('database.sqlite'),
                 'prefix' => '',
-                'foreign_key_constraints' => env('LEAN_DB_FOREIGN_KEYS', true),
+                'foreign_key_constraints' => env('JULIANNA_DB_FOREIGN_KEYS', true),
                 'busy_timeout' => null,
                 'journal_mode' => null,
                 'synchronous' => null,
             ],
             'mysql' => [
                 'driver' => 'mysql',
-                'url' => env('LEAN_DB_URL'),
-                'host' => env('LEAN_DB_HOST', '127.0.0.1'),
-                'port' => env('LEAN_DB_PORT', '3306'),
-                'database' => env('LEAN_DB_DATABASE', 'laravel'),
-                'username' => env('LEAN_DB_USER', 'root'),
-                'password' => env('LEAN_DB_PASSWORD', ''),
-                'unix_socket' => env('LEAN_DB_SOCKET', ''),
-                'charset' => env('LEAN_DB_CHARSET', 'utf8mb4'),
-                'collation' => env('LEAN_DB_COLLATION', 'utf8mb4_unicode_ci'),
+                'url' => env('JULIANNA_DB_URL'),
+                'host' => env('JULIANNA_DB_HOST', '127.0.0.1'),
+                'port' => env('JULIANNA_DB_PORT', '3306'),
+                'database' => env('JULIANNA_DB_DATABASE', 'laravel'),
+                'username' => env('JULIANNA_DB_USER', 'root'),
+                'password' => env('JULIANNA_DB_PASSWORD', ''),
+                'unix_socket' => env('JULIANNA_DB_SOCKET', ''),
+                'charset' => env('JULIANNA_DB_CHARSET', 'utf8mb4'),
+                'collation' => env('JULIANNA_DB_COLLATION', 'utf8mb4_unicode_ci'),
                 'prefix' => '',
                 'prefix_indexes' => true,
                 'strict' => false,
@@ -584,7 +587,7 @@ return [
                     'ANSI_QUOTES',
                 ],
                 'engine' => 'InnoDB',
-                'sslmode' => env('LEAN_DB_SSLMODE', ''),
+                'sslmode' => env('JULIANNA_DB_SSLMODE', ''),
                 'options' => (function () {
                     if (! extension_loaded('pdo_mysql')) {
                         return [];
@@ -593,23 +596,23 @@ return [
                     // Start with generic PDO options (always available)
                     $options = [
                         PDO::ATTR_EMULATE_PREPARES => true,
-                        PDO::ATTR_PERSISTENT => env('LEAN_DB_PERSISTENT_CONNECTIONS', true),
-                        PDO::ATTR_TIMEOUT => env('LEAN_DB_CONNECTION_TIMEOUT', 30),
+                        PDO::ATTR_PERSISTENT => env('JULIANNA_DB_PERSISTENT_CONNECTIONS', true),
+                        PDO::ATTR_TIMEOUT => env('JULIANNA_DB_CONNECTION_TIMEOUT', 30),
                     ];
 
                     // MySQL-specific constants may be absent on some PHP builds
                     // (e.g. cPanel/EasyApache), so guard each with defined() (#3371)
                     $mysqlOptions = [
-                        'MYSQL_ATTR_SSL_VERIFY_SERVER_CERT' => env('LEAN_DB_MYSQL_ATTR_SSL_VERIFY_SERVER', false),
-                        'MYSQL_ATTR_SSL_KEY' => env('LEAN_DB_MYSQL_ATTR_SSL_KEY'),
-                        'MYSQL_ATTR_SSL_CERT' => env('LEAN_DB_MYSQL_ATTR_SSL_CERT'),
-                        'MYSQL_ATTR_SSL_CA' => env('LEAN_DB_MYSQL_ATTR_SSL_CA'),
+                        'MYSQL_ATTR_SSL_VERIFY_SERVER_CERT' => env('JULIANNA_DB_MYSQL_ATTR_SSL_VERIFY_SERVER', false),
+                        'MYSQL_ATTR_SSL_KEY' => env('JULIANNA_DB_MYSQL_ATTR_SSL_KEY'),
+                        'MYSQL_ATTR_SSL_CERT' => env('JULIANNA_DB_MYSQL_ATTR_SSL_CERT'),
+                        'MYSQL_ATTR_SSL_CA' => env('JULIANNA_DB_MYSQL_ATTR_SSL_CA'),
                         'MYSQL_ATTR_USE_BUFFERED_QUERY' => true,
                         'MYSQL_ATTR_FOUND_ROWS' => true,
                         'MYSQL_ATTR_INIT_COMMAND' => sprintf(
                             'SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci, @@session.wait_timeout = %d, @@session.interactive_timeout = %d',
-                            env('LEAN_DB_IDLE_TIMEOUT', 3600),
-                            env('LEAN_DB_IDLE_TIMEOUT', 3600)
+                            env('JULIANNA_DB_IDLE_TIMEOUT', 3600),
+                            env('JULIANNA_DB_IDLE_TIMEOUT', 3600)
                         ),
                     ];
 
@@ -625,20 +628,20 @@ return [
             ],
             'pgsql' => [
                 'driver' => 'pgsql',
-                'url' => env('LEAN_DB_URL'),
-                'host' => env('LEAN_DB_HOST', '127.0.0.1'),
-                'port' => env('LEAN_DB_PORT', '5432'),
-                'database' => env('LEAN_DB_DATABASE', 'leantime'),
-                'username' => env('LEAN_DB_USER', 'postgres'),
-                'password' => env('LEAN_DB_PASSWORD', ''),
-                'charset' => env('LEAN_DB_CHARSET', 'utf8'),
+                'url' => env('JULIANNA_DB_URL'),
+                'host' => env('JULIANNA_DB_HOST', '127.0.0.1'),
+                'port' => env('JULIANNA_DB_PORT', '5432'),
+                'database' => env('JULIANNA_DB_DATABASE', 'julianna'),
+                'username' => env('JULIANNA_DB_USER', 'postgres'),
+                'password' => env('JULIANNA_DB_PASSWORD', ''),
+                'charset' => env('JULIANNA_DB_CHARSET', 'utf8'),
                 'prefix' => '',
                 'prefix_indexes' => true,
-                'search_path' => env('LEAN_DB_SCHEMA', 'public'),
-                'sslmode' => env('LEAN_DB_SSLMODE', 'prefer'),
+                'search_path' => env('JULIANNA_DB_SCHEMA', 'public'),
+                'sslmode' => env('JULIANNA_DB_SSLMODE', 'prefer'),
                 'options' => extension_loaded('pdo_pgsql') ? array_filter([
-                    PDO::ATTR_PERSISTENT => env('LEAN_DB_PERSISTENT_CONNECTIONS', true),
-                    PDO::ATTR_TIMEOUT => env('LEAN_DB_CONNECTION_TIMEOUT', 30),
+                    PDO::ATTR_PERSISTENT => env('JULIANNA_DB_PERSISTENT_CONNECTIONS', true),
+                    PDO::ATTR_TIMEOUT => env('JULIANNA_DB_CONNECTION_TIMEOUT', 30),
                 ]) : [],
             ],
         ],
@@ -664,18 +667,19 @@ return [
             'compression' => 3, // Redis::COMPRESSION_LZ4
         ],
         'default' => [
-            'url' => env('LEAN_REDIS_URL', ''),
-            'scheme' => env('LEAN_REDIS_SCHEME', 'tls'),
-            'host' => env('LEAN_REDIS_HOST', '127.0.0.1'),
-            'username' => env('LEAN_REDIS_USERNAME'),
-            'password' => env('LEAN_REDIS_PASSWORD'),
-            'port' => env('LEAN_REDIS_PORT', '6379'),
-            'database' => env('LEAN_REDIS_DB', '0'),
+            'url' => env('JULIANNA_REDIS_URL', ''),
+            'scheme' => env('JULIANNA_REDIS_SCHEME', 'tls'),
+            'host' => env('JULIANNA_REDIS_HOST', '127.0.0.1'),
+            'username' => env('JULIANNA_REDIS_USERNAME'),
+            'password' => env('JULIANNA_REDIS_PASSWORD'),
+            'port' => env('JULIANNA_REDIS_PORT', '6379'),
+            'database' => env('JULIANNA_REDIS_DB', '0'),
             'read_timeout' => 1.0,
-            'prefix' => 'leantime_cache',
+            'prefix' => 'julianna_cache',
         ],
     ],
     'auth' => [
+        'registration_enabled' => env('JULIANNA_REGISTRATION_ENABLED', true),
         'defaults' => [
             'guard' => 'leantime',
             'passwords' => 'users',
@@ -700,32 +704,32 @@ return [
     ],
     'sentry' => [
         // @see https://docs.sentry.io/product/sentry-basics/dsn-explainer/
-        'dsn' => env('LEAN_SENTRY_LARAVEL_DSN', env('LEAN_SENTRY_DSN')),
+        'dsn' => env('JULIANNA_SENTRY_LARAVEL_DSN', env('JULIANNA_SENTRY_DSN')),
 
         // @see https://spotlightjs.com/
-        // 'spotlight' => env('LEAN_SENTRY_SPOTLIGHT', false),
+        // 'spotlight' => env('JULIANNA_SENTRY_SPOTLIGHT', false),
 
         // @see: https://docs.sentry.io/platforms/php/guides/laravel/configuration/options/#logger
-        // 'logger' => (env('LEAN_DEBUG') === "1" || env('LEAN_DEBUG') === "true") ? Sentry\Logger\DebugFileLogger::class : null, // By default this will log to `storage_path('logs/sentry.log')`
+        // 'logger' => (env('JULIANNA_DEBUG') === "1" || env('JULIANNA_DEBUG') === "true") ? Sentry\Logger\DebugFileLogger::class : null, // By default this will log to `storage_path('logs/sentry.log')`
 
         // The release version of your application
         // Example with dynamic git hash: trim(exec('git --git-dir ' . base_path('.git') . ' log --pretty="%h" -n1 HEAD'))
-        'release' => 'leantime-backend@'.get_release_version(),
+        'release' => 'julianna-backend@'.get_release_version(),
 
         // When left empty or `null` the Laravel environment will be used (usually discovered from `APP_ENV` in your `.env`)
-        'environment' => env('LEAN_ENV', 'dev'),
+        'environment' => env('JULIANNA_ENV', 'dev'),
 
         // @see: https://docs.sentry.io/platforms/php/guides/laravel/configuration/options/#sample-rate
-        'sample_rate' => env('LEAN_SENTRY_SAMPLE_RATE') === null ? 1.0 : (float) env('LEAN_SENTRY_SAMPLE_RATE'),
+        'sample_rate' => env('JULIANNA_SENTRY_SAMPLE_RATE') === null ? 1.0 : (float) env('JULIANNA_SENTRY_SAMPLE_RATE'),
 
         // @see: https://docs.sentry.io/platforms/php/guides/laravel/configuration/options/#traces-sample-rate
-        'traces_sample_rate' => env('LEAN_SENTRY_TRACES_SAMPLE_RATE') === null ? null : (float) env('LEAN_SENTRY_TRACES_SAMPLE_RATE'),
+        'traces_sample_rate' => env('JULIANNA_SENTRY_TRACES_SAMPLE_RATE') === null ? null : (float) env('JULIANNA_SENTRY_TRACES_SAMPLE_RATE'),
 
         // @see: https://docs.sentry.io/platforms/php/guides/laravel/configuration/options/#profiles-sample-rate
-        'profiles_sample_rate' => env('LEAN_SENTRY_PROFILES_SAMPLE_RATE') === null ? null : (float) env('LEAN_SENTRY_PROFILES_SAMPLE_RATE'),
+        'profiles_sample_rate' => env('JULIANNA_SENTRY_PROFILES_SAMPLE_RATE') === null ? null : (float) env('JULIANNA_SENTRY_PROFILES_SAMPLE_RATE'),
 
         // @see: https://docs.sentry.io/platforms/php/guides/laravel/configuration/options/#send-default-pii
-        'send_default_pii' => env('LEAN_SENTRY_SEND_DEFAULT_PII', false),
+        'send_default_pii' => env('JULIANNA_SENTRY_SEND_DEFAULT_PII', false),
 
         // @see: https://docs.sentry.io/platforms/php/guides/laravel/configuration/options/#ignore-exceptions
         // 'ignore_exceptions' => [],
@@ -742,83 +746,83 @@ return [
         // Breadcrumb specific configuration
         'breadcrumbs' => [
             // Capture Laravel logs as breadcrumbs
-            'logs' => env('LEAN_SENTRY_BREADCRUMBS_LOGS_ENABLED', true),
+            'logs' => env('JULIANNA_SENTRY_BREADCRUMBS_LOGS_ENABLED', true),
 
             // Capture Laravel cache events (hits, writes etc.) as breadcrumbs
-            'cache' => env('LEAN_SENTRY_BREADCRUMBS_CACHE_ENABLED', false),
+            'cache' => env('JULIANNA_SENTRY_BREADCRUMBS_CACHE_ENABLED', false),
 
             // Capture Livewire components like routes as breadcrumbs
-            'livewire' => env('LEAN_SENTRY_BREADCRUMBS_LIVEWIRE_ENABLED', false),
+            'livewire' => env('JULIANNA_SENTRY_BREADCRUMBS_LIVEWIRE_ENABLED', false),
 
             // Capture SQL queries as breadcrumbs
-            'sql_queries' => env('LEAN_SENTRY_BREADCRUMBS_SQL_QUERIES_ENABLED', true),
+            'sql_queries' => env('JULIANNA_SENTRY_BREADCRUMBS_SQL_QUERIES_ENABLED', true),
 
             // Capture SQL query bindings (parameters) in SQL query breadcrumbs
-            'sql_bindings' => env('LEAN_SENTRY_BREADCRUMBS_SQL_BINDINGS_ENABLED', false),
+            'sql_bindings' => env('JULIANNA_SENTRY_BREADCRUMBS_SQL_BINDINGS_ENABLED', false),
 
             // Capture queue job information as breadcrumbs
-            'queue_info' => env('LEAN_SENTRY_BREADCRUMBS_QUEUE_INFO_ENABLED', true),
+            'queue_info' => env('JULIANNA_SENTRY_BREADCRUMBS_QUEUE_INFO_ENABLED', true),
 
             // Capture command information as breadcrumbs
-            'command_info' => env('LEAN_SENTRY_BREADCRUMBS_COMMAND_JOBS_ENABLED', true),
+            'command_info' => env('JULIANNA_SENTRY_BREADCRUMBS_COMMAND_JOBS_ENABLED', true),
 
             // Capture HTTP client request information as breadcrumbs
-            'http_client_requests' => env('LEAN_SENTRY_BREADCRUMBS_HTTP_CLIENT_REQUESTS_ENABLED', true),
+            'http_client_requests' => env('JULIANNA_SENTRY_BREADCRUMBS_HTTP_CLIENT_REQUESTS_ENABLED', true),
 
             // Capture send notifications as breadcrumbs
-            'notifications' => env('LEAN_SENTRY_BREADCRUMBS_NOTIFICATIONS_ENABLED', true),
+            'notifications' => env('JULIANNA_SENTRY_BREADCRUMBS_NOTIFICATIONS_ENABLED', true),
         ],
 
         // Performance monitoring specific configuration
         'tracing' => [
             // Trace queue jobs as their own transactions (this enables tracing for queue jobs)
-            'queue_job_transactions' => env('LEAN_SENTRY_TRACE_QUEUE_ENABLED', true),
+            'queue_job_transactions' => env('JULIANNA_SENTRY_TRACE_QUEUE_ENABLED', true),
 
             // Capture queue jobs as spans when executed on the sync driver
-            'queue_jobs' => env('LEAN_SENTRY_TRACE_QUEUE_JOBS_ENABLED', true),
+            'queue_jobs' => env('JULIANNA_SENTRY_TRACE_QUEUE_JOBS_ENABLED', true),
 
             // Capture SQL queries as spans
-            'sql_queries' => env('LEAN_SENTRY_TRACE_SQL_QUERIES_ENABLED', true),
+            'sql_queries' => env('JULIANNA_SENTRY_TRACE_SQL_QUERIES_ENABLED', true),
 
             // Capture SQL query bindings (parameters) in SQL query spans
-            'sql_bindings' => env('LEAN_SENTRY_TRACE_SQL_BINDINGS_ENABLED', false),
+            'sql_bindings' => env('JULIANNA_SENTRY_TRACE_SQL_BINDINGS_ENABLED', false),
 
             // Capture where the SQL query originated from on the SQL query spans
-            'sql_origin' => env('LEAN_SENTRY_TRACE_SQL_ORIGIN_ENABLED', true),
+            'sql_origin' => env('JULIANNA_SENTRY_TRACE_SQL_ORIGIN_ENABLED', true),
 
             // Define a threshold in milliseconds for SQL queries to resolve their origin
-            'sql_origin_threshold_ms' => env('LEAN_SENTRY_TRACE_SQL_ORIGIN_THRESHOLD_MS', 100),
+            'sql_origin_threshold_ms' => env('JULIANNA_SENTRY_TRACE_SQL_ORIGIN_THRESHOLD_MS', 100),
 
             // Capture views rendered as spans
-            'views' => env('LEAN_SENTRY_TRACE_VIEWS_ENABLED', true),
+            'views' => env('JULIANNA_SENTRY_TRACE_VIEWS_ENABLED', true),
 
             // Capture Livewire components as spans
-            'livewire' => env('LEAN_SENTRY_TRACE_LIVEWIRE_ENABLED', false),
+            'livewire' => env('JULIANNA_SENTRY_TRACE_LIVEWIRE_ENABLED', false),
 
             // Capture HTTP client requests as spans
-            'http_client_requests' => env('LEAN_SENTRY_TRACE_HTTP_CLIENT_REQUESTS_ENABLED', true),
+            'http_client_requests' => env('JULIANNA_SENTRY_TRACE_HTTP_CLIENT_REQUESTS_ENABLED', true),
 
             // Capture Laravel cache events (hits, writes etc.) as spans
-            'cache' => env('LEAN_SENTRY_TRACE_CACHE_ENABLED', true),
+            'cache' => env('JULIANNA_SENTRY_TRACE_CACHE_ENABLED', true),
 
             // Capture Redis operations as spans (this enables Redis events in Laravel)
-            'redis_commands' => env('LEAN_USE_REDIS', true),
+            'redis_commands' => env('JULIANNA_USE_REDIS', true),
 
             // Capture where the Redis command originated from on the Redis command spans
-            'redis_origin' => env('LEAN_USE_REDIS', true),
+            'redis_origin' => env('JULIANNA_USE_REDIS', true),
 
             // Capture send notifications as spans
-            'notifications' => env('LEAN_SENTRY_TRACE_NOTIFICATIONS_ENABLED', true),
+            'notifications' => env('JULIANNA_SENTRY_TRACE_NOTIFICATIONS_ENABLED', true),
 
             // Enable tracing for requests without a matching route (404's)
-            'missing_routes' => env('LEAN_SENTRY_TRACE_MISSING_ROUTES_ENABLED', false),
+            'missing_routes' => env('JULIANNA_SENTRY_TRACE_MISSING_ROUTES_ENABLED', false),
 
             // Configures if the performance trace should continue after the response has been sent to the user until the application terminates
             // This is required to capture any spans that are created after the response has been sent like queue jobs dispatched using `dispatch(...)->afterResponse()` for example
-            'continue_after_response' => env('LEAN_SENTRY_TRACE_CONTINUE_AFTER_RESPONSE', true),
+            'continue_after_response' => env('JULIANNA_SENTRY_TRACE_CONTINUE_AFTER_RESPONSE', true),
 
             // Enable the tracing integrations supplied by Sentry (recommended)
-            'default_integrations' => env('LEAN_SENTRY_TRACE_DEFAULT_INTEGRATIONS_ENABLED', true),
+            'default_integrations' => env('JULIANNA_SENTRY_TRACE_DEFAULT_INTEGRATIONS_ENABLED', true),
         ],
     ],
     'sanctum' => [
@@ -936,7 +940,7 @@ return [
 
             'database' => [
                 'driver' => 'database',
-                'connection' => env('LEAN_DB_DEFAULT_CONNECTION', 'mysql'),
+                'connection' => env('JULIANNA_DB_DEFAULT_CONNECTION', 'mysql'),
                 'table' => 'zp_jobs',
                 'queue' => 'default',
                 'retry_after' => 90,
@@ -986,7 +990,7 @@ return [
         */
 
         'batching' => [
-            'database' => env('LEAN_DB_DEFAULT_CONNECTION', 'mysql'),
+            'database' => env('JULIANNA_DB_DEFAULT_CONNECTION', 'mysql'),
             'table' => 'job_batches',
         ],
 
@@ -1005,7 +1009,7 @@ return [
 
         'failed' => [
             'driver' => 'database-uuids',
-            'database' => env('LEAN_DB_DEFAULT_CONNECTION', 'mysql'),
+            'database' => env('JULIANNA_DB_DEFAULT_CONNECTION', 'mysql'),
             'table' => 'failed_jobs',
         ],
 

@@ -123,7 +123,7 @@ class TwoFA
      */
     private function createTwoFactorAuth(): TwoFactorAuth
     {
-        return new TwoFactorAuth('Leantime', 6, 30, 'sha1', new class implements IQRCodeProvider
+        return new TwoFactorAuth('Julianna', 6, 30, 'sha1', new class implements IQRCodeProvider
         {
             public function getMimeType(): string
             {

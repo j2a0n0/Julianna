@@ -61,8 +61,8 @@ class TestEmailCommand extends Command
         $io->writeln('Sending a test email using current configuration');
 
         $mailer = app()->make(Mailer::class);
-        $mailer->setSubject('Leantime email test');
-        $mailer->setHtml('This is a test of the leantime mailer configuration. If you have received this email, then the mail configuration is correct.', true);
+        $mailer->setSubject('Julianna email test');
+        $mailer->setHtml('This is a test of the Julianna mail configuration. If you received it, email delivery is configured correctly.', true);
         $mailer->sendMail([$input->getOption('address')], 'Command-line test');
 
         return Command::SUCCESS;

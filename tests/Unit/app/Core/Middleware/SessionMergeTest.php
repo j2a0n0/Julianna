@@ -70,7 +70,7 @@ class SessionMergeTest extends TestCase
     public function test_merge_preserves_a_concurrent_writers_key(): void
     {
         $handler = new ArraySessionHandler(120);
-        $name = 'leantime_session';
+        $name = 'julianna_session';
         // Store::setId() rejects ids that aren't 40-char alphanumeric and
         // generates a random one instead, so the id must be a valid session id
         // for the three stores to share state through the handler.
@@ -111,7 +111,7 @@ class SessionMergeTest extends TestCase
     public function test_merge_applies_removed_keys(): void
     {
         $handler = new ArraySessionHandler(120);
-        $name = 'leantime_session';
+        $name = 'julianna_session';
         $id = str_repeat('b', 40);
 
         $seed = new Store($name, $handler, $id);

@@ -3,7 +3,6 @@
 namespace Unit\app\Domain\Widgets\Services;
 
 use Leantime\Domain\Projects\Services\Projects as ProjectService;
-use Leantime\Domain\Reports\Services\Reports as ReportService;
 use Leantime\Domain\Setting\Services\Setting as SettingService;
 use Leantime\Domain\Tickets\Services\Tickets as TicketService;
 use Leantime\Domain\Users\Services\Users as UserService;
@@ -42,7 +41,6 @@ class DashboardServiceTest extends TestCase
             $overrides['settings'] ?? $this->make(SettingService::class),
             $overrides['projects'] ?? $this->make(ProjectService::class),
             $overrides['users'] ?? $this->make(UserService::class),
-            $overrides['reports'] ?? $this->make(ReportService::class),
             $overrides['widgets'] ?? $this->make(Widgets::class),
         );
     }

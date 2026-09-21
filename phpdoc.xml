@@ -5,7 +5,7 @@
     xmlns="https://www.phpdoc.org"
     xsi:noNamespaceSchemaLocation="https://docs.phpdoc.org/latest/phpdoc.xsd"
 >
-    <title>Leantime Code Reference</title>
+    <title>Julianna Code Reference</title>
     <!-- Build Paths -->
     <paths>
         <output>builddocs/technical</output>

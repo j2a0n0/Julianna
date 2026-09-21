@@ -1,6 +1,6 @@
 <?php
 
-namespace Leantime\Domain\ModuleManager\Controllers;
+namespace Leantime\Domain\Modulemanager\Controllers;
 
 use Leantime\Core\Controller\Frontcontroller;
 use Leantime\Core\Events\DispatchesEvents;

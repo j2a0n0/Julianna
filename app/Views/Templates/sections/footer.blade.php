@@ -1,28 +1,17 @@
 @dispatchEvent('beforeFooterOpen')
 
-{{--<div class="footer">--}}
-<span style="color:var(--main-titles-color); padding-left:15px; opacity:0.5;">
+<footer class="footer" aria-label="{{ __('about.legal_navigation') }}" style="padding:18px 15px; color:var(--primary-font-color); opacity:.72;">
     @dispatchEvent('afterFooterOpen')
-</span>
-{{--    <div class="row">--}}
-{{--        <div class="col-md-6">--}}
-{{--            © {{ date("Y") }} by <a href="http://leantime.io" target="_blank">Leantime</a>--}}
-{{--        </div>--}}
-{{--        <div class="col-md-6 align-right">--}}
-{{--            <a href="http://leantime.io" target="_blank">--}}
-{{--                <img--}}
-{{--                    style="height: 18px; opacity:0.5; vertical-align:sub;"--}}
-{{--                    src="{!! BASE_URL !!}/dist/images/logo-powered-by-leantime.png"--}}
-{{--                />--}}
-{{--                <span style="color:var(--primary-font-color); opacity:0.5;">v{{ $version }}</span>--}}
-{{--            </a>--}}
-{{--        </div>--}}
-{{--    </div>--}}
-
-
+    <span>© {{ date('Y') }} Julianna · v{{ $version }}@if($commit !== '') · {{ substr($commit, 0, 8) }}@endif</span>
+    <span aria-hidden="true"> · </span>
+    <a href="{{ BASE_URL }}/help/about">{{ __('links.about') }}</a>
+    <span aria-hidden="true"> · </span>
+    <a href="{{ BASE_URL }}/help/about#license">{{ __('links.license') }}</a>
+    <span aria-hidden="true"> · </span>
+    <a href="{{ BASE_URL }}/help/about#notices">{{ __('links.notices') }}</a>
+    <span aria-hidden="true"> · </span>
+    <a href="{{ $sourceUrl !== '' ? $sourceUrl : BASE_URL.'/help/about#source' }}" @if($sourceUrl !== '') target="_blank" rel="noopener noreferrer" @endif>{{ __('links.source_code') }}</a>
     @dispatchEvent('beforeFooterClose')
-
-
-{{--</div>--}}
+</footer>
 
 @dispatchEvent('afterFooter')

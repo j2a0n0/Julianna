@@ -108,7 +108,7 @@
                 <br/>
                 <ul class="sortableTicketList">
                     @if (count($tickets) == 0)
-                        <em>Nothing to see here. Move on.</em><br/><br/>
+                        <em>{{ __('text.nothing_to_see') }}</em><br/><br/>
                     @endif
 
                     @foreach($tickets as $row)

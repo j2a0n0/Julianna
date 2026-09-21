@@ -23,8 +23,8 @@ class ApiCest
 
         // Ensure database is installed before running API tests
         $this->installPage->install(
-            'test@leantime.io',
-            'Test123456!',
+            'owner@julianna.test',
+            'JuliannaTest123!',
             'John',
             'Smith',
             'Smith & Co'
@@ -36,7 +36,7 @@ class ApiCest
     public function createAPIKey(AcceptanceTester $I)
     {
 
-        $this->loginPage->login('test@leantime.io', 'test');
+        $this->loginPage->login('owner@julianna.test', 'JuliannaTest123!');
 
         // Generate API key if not exists
         $I->amOnPage('setting/editCompanySettings#/api/newApiKey');
@@ -53,8 +53,8 @@ class ApiCest
 
         $this->apiKey = $I->grabValueFrom('#apiKey');
 
-        $I->resetCookie('leantime_session', []);
-        $I->deleteSessionSnapshot('leantime_session');
+        $I->resetCookie('julianna_session', []);
+        $I->deleteSessionSnapshot('julianna_session');
     }
 
     #[Group('api')]

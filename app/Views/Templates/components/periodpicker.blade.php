@@ -38,7 +38,7 @@
 
     $isCustom = $period->preset === ReportPeriod::PRESET_CUSTOM;
 
-    // The pill shows the preset NAME, never a calendar quarter label: Leantime
+    // The pill shows the preset name, never a calendar quarter label: Julianna
     // has no fiscal-quarter setting, so "Q3 2026" would be a lie for anyone
     // whose fiscal year isn't calendar-aligned. The literal range sits next to it.
     $activeName = $presets[$period->preset] ?? __('label.period_custom');

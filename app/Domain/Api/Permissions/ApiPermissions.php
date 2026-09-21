@@ -8,7 +8,7 @@ use Leantime\Core\Auth\Permissions\ProvidesPermissions;
 /**
  * The API (key management) permission vocabulary — the verbs only.
  *
- * Leantime API keys act as service accounts (a key IS a user row with a role), so creating,
+ * Julianna API keys act as service accounts (a key is a user row with a role), so creating,
  * listing, and editing them is an installation-wide administrative capability — the management
  * UI (ApiKey / NewApiKey / DelAPIKey controllers) is already `authOrRedirect([owner, admin])`.
  * The single verb below is therefore COMPANY-WIDE (`projectScoped = false`); call sites gate with

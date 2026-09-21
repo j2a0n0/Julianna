@@ -66,10 +66,14 @@ $bootstrapper = get_class(new class
      */
     protected function createDatabase(): void
     {
-        $host = getenv('LEAN_DB_HOST');
-        $user = getenv('LEAN_DB_USER');
-        $pass = getenv('LEAN_DB_PASSWORD');
-        $db = getenv('LEAN_DB_DATABASE');
+        $host = getenv('JULIANNA_DB_HOST');
+        $user = getenv('JULIANNA_DB_USER');
+        $pass = getenv('JULIANNA_DB_PASSWORD');
+        $db = getenv('JULIANNA_DB_DATABASE');
+
+        if (! is_string($db) || preg_match('/^[A-Za-z0-9_]+$/', $db) !== 1) {
+            throw new RuntimeException('JULIANNA_DB_DATABASE must be a simple MySQL identifier for acceptance tests.');
+        }
 
         $this->createStep('Dropping Test Database');
         $result = $this->executeCommand([
@@ -79,7 +83,7 @@ $bootstrapper = get_class(new class
             "--password=$pass",
             '--skip-ssl',
             '-e',
-            "DROP DATABASE IF EXISTS $db;",
+            "DROP DATABASE IF EXISTS `$db`;",
         ], ['cwd' => DEV_ROOT]);
 
         $this->createStep('Creating Test Database');
@@ -90,7 +94,7 @@ $bootstrapper = get_class(new class
             "--password=$pass",
             '--skip-ssl',
             '-e',
-            'CREATE DATABASE IF NOT EXISTS leantime_test;',
+            "CREATE DATABASE IF NOT EXISTS `$db`;",
         ], ['cwd' => DEV_ROOT]);
 
         $this->createStep('Clearing Application Cache');

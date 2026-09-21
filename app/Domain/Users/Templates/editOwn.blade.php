@@ -52,7 +52,7 @@
                                         <div class="form-group">
                                             <label for="user" >{{ __('label.email') }}</label>
                                             <span>
-                                                <input type="text" name="user" class="input" id="user" {{ session("userdata.isExternalAuth") ? "disabled='disabled'" : '' }}
+                                                <input type="text" name="user" class="input" id="user" readonly
                                                 value="{{ $values['user']  }}"/><br/>
                                             </span>
                                         </div>
@@ -147,57 +147,13 @@
                         <h4 class="widgettitle title-light">
                             {!! __('headlines.change_password') !!}
                         </h4>
-                        @if (session("userdata.isExternalAuth") )
-                            <strong> {{  __("text.account_managed_external_auth") }}</strong><br /><br />
-                        @endif
-                        <form method="post">
-                            <input type="hidden" name="{{ session("formTokenName") }}" value="{{ session("formTokenValue") }}" />
-                            <div class="row-fluid">
-                                <div class="form-group">
-                                    <label for="currentPassword" >{{ __('label.old_password') }}</label>
-                                    <span>
-                                        <input type='password' value="" name="currentPassword" class="input" {{ session("userdata.isExternalAuth") ? "disabled='disabled'" : '' }}
-                                               id="currentPassword"/><br/>
-                                    </span>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="newPassword" >{{ __('label.new_password') }}</label>
-                                    <span>
-                                        <input type='password' value="" name="newPassword" class="input" {{ session("userdata.isExternalAuth") ? "disabled='disabled'" : '' }}
-                                               id="newPassword"/>
-                                        <span id="pwStrength"></span>
-
-                                    </span>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="confirmPassword" >{{ __('label.password_repeat') }}</label>
-                                    <span>
-                                        <input type="password" value="" name="confirmPassword" class="input" {{ session("userdata.isExternalAuth") ? "disabled='disabled'" : '' }}
-                                               id="confirmPassword"/><br/>
-                                        @if (!session("userdata.isExternalAuth") )
-                                        <small>{{ __('label.passwordRequirements') }}</small>
-                                       @endif
-                                    </span>
-
-                                </div>
-                            </div>
-                            @if (!session("userdata.isExternalAuth") )
-                                <input type="hidden" name="savepw" value="1" />
-                                <x-global::forms.button tag="input" inputType="submit" contentRole="primary" :labelText="__('buttons.save')" name="save" id="savePw" />
-                            @endif
-                        </form>
+                        <p>{{ __('text.password_changes_use_secure_reset') }}</p>
+                        <p><a href="{{ BASE_URL }}/auth/resetPw">{{ __('links.request_password_reset') }}</a></p>
                         <br /><br />
                         <h4 class="widgettitle title-light">
                             <i class="fa-solid fa-shield-halved"></i> {{ __('headlines.twoFA') }}
                         </h4>
-                        @if ($values['twoFAEnabled'] )
-                            <p>{!!   __('text.twoFA_enabled') !!}</p>
-                        @else
-                            <p>{!! __('text.twoFA_disabled')  !!}</p>
-                        @endif
-                        <p><a href="{{ BASE_URL }}/twoFA/edit">{!! __('text.twoFA_manage') !!}</a></p>
+                        <p>{{ __('text.julianna_mfa_mandatory') }}</p>
                     </div>
 
                     <div id="settings">
@@ -281,7 +237,7 @@
                             <input type="hidden" name="{{ session("formTokenName") }}" value="{{ session("formTokenValue") }}" />
                             <div class="row-fluid">
                                 <div class="form-group">
-                                    <label for="themeSelect">Optimal Stimulation</label>
+                                    <label for="themeSelect">{{ __('label.optimal_stimulation') }}</label>
                                     <span class='field tw-flex tw-w-80'>
 
                                          <?php
@@ -318,7 +274,7 @@
                                 <div class="row">
                                     <div class="col-md-12">
                                         <hr />
-                                        <label>Font</label>
+                                        <label>{{ __('label.font') }}</label>
                                         @foreach($availableFonts as $key => $font)
 
                                             <x-global::selectable  :selected="($themeFont == $font) ? 'true' : ''" :id="$key" :name="'themeFont'" :value="$font" :label="$font" onclick="leantime.snippets.toggleFont('{{ $font }}')">
@@ -335,7 +291,7 @@
                                 <div class="row">
                                     <div class="col-md-12">
                                         <hr />
-                                        <label>Color Scheme</label>
+                                        <label>{{ __('label.color_scheme') }}</label>
                                         @foreach($availableColorSchemes as $key => $scheme )
                                             <x-global::selectable class="circle" :selected="($userColorScheme == $key) ? 'true' : ''" :id="$key" :name="'colorscheme'" :value="$key" :label="__($scheme['name'])"  onclick="leantime.snippets.toggleColors('{{ $scheme['primaryColor'] }}','{{ $scheme['secondaryColor'] }}');">
                                                 <label for="color-{{ $key }}" class="colorCircle"
@@ -493,8 +449,6 @@
 <script type="text/javascript">
 
     jQuery(document).ready(function(){
-
-        leantime.usersController.checkPWStrength('newPassword');
 
         jQuery('.accountTabs').tabs();
 

@@ -35,13 +35,13 @@ class ApplicationUrlTest extends \Unit\TestCase
 
     public function test_base_url_is_set_correctly_from_config(): void
     {
-        // BASE_URL constant is set from LEAN_APP_URL in the environment.
+        // BASE_URL constant is set from JULIANNA_APP_URL in the environment.
         // Verify the config matches whatever BASE_URL was resolved to.
         $this->assertEquals(BASE_URL, $this->config->get('app.url'));
 
-        // Test with LEAN_APP_URL set to a known value
-        putenv('LEAN_APP_URL=https://example.com');
-        $_ENV['LEAN_APP_URL'] = 'https://example.com';
+        // Test with JULIANNA_APP_URL set to a known value
+        putenv('JULIANNA_APP_URL=https://example.com');
+        $_ENV['JULIANNA_APP_URL'] = 'https://example.com';
 
         // Reinitialize application to test new environment
         $this->bootstrapApplication();
@@ -53,7 +53,7 @@ class ApplicationUrlTest extends \Unit\TestCase
     public function test_base_url_handles_trailing_slash(): void
     {
 
-        $_ENV['LEAN_APP_URL'] = 'https://example.com/';
+        $_ENV['JULIANNA_APP_URL'] = 'https://example.com/';
 
         $this->bootstrapApplication();
 
@@ -64,18 +64,18 @@ class ApplicationUrlTest extends \Unit\TestCase
     public function test_base_url_handles_subdirectory(): void
     {
 
-        $_ENV['LEAN_APP_URL'] = 'https://example.com/leantime';
+        $_ENV['JULIANNA_APP_URL'] = 'https://example.com/julianna';
 
         $this->bootstrapApplication();
 
-        $this->assertEquals('https://example.com/leantime', $this->config->get('app.url'));
-        $this->assertEquals('https://example.com/leantime', $this->config->get('appUrl'));
+        $this->assertEquals('https://example.com/julianna', $this->config->get('app.url'));
+        $this->assertEquals('https://example.com/julianna', $this->config->get('appUrl'));
     }
 
     public function test_base_url_handles_port(): void
     {
 
-        $_ENV['LEAN_APP_URL'] = 'https://example.com:8443';
+        $_ENV['JULIANNA_APP_URL'] = 'https://example.com:8443';
 
         $this->bootstrapApplication();
 
@@ -89,7 +89,7 @@ class ApplicationUrlTest extends \Unit\TestCase
         $_SERVER['HTTP_X_FORWARDED_PROTO'] = 'https';
         $_SERVER['HTTP_X_FORWARDED_HOST'] = 'example.com';
 
-        $_ENV['LEAN_APP_URL'] = 'https://example.com';
+        $_ENV['JULIANNA_APP_URL'] = 'https://example.com';
 
         $this->bootstrapApplication();
 
@@ -102,7 +102,7 @@ class ApplicationUrlTest extends \Unit\TestCase
         parent::tearDown();
 
         // Clean up environment
-        putenv('LEAN_APP_URL');
+        putenv('JULIANNA_APP_URL');
         unset($_SERVER['HTTP_X_FORWARDED_PROTO']);
         unset($_SERVER['HTTP_X_FORWARDED_HOST']);
     }

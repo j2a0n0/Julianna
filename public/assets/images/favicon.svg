@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Julianna">
+  <defs>
+    <linearGradient id="juliannaIconGradient" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#3156A3"/>
+      <stop offset="1" stop-color="#7047A8"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="17" fill="url(#juliannaIconGradient)"/>
+  <path d="M39 14v25c0 10-6 16-16 16-7 0-12-3-16-8l9-8c2 3 4 4 7 4 3 0 5-2 5-6V14h11Z" fill="#FFFFFF"/>
+</svg>

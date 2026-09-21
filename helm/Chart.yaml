@@ -1,6 +1,6 @@
 apiVersion: v2
-name: leantime
-description: A Leantime Helm chart for Kubernetes. Project management more capable than Trello and no where near as overwhelming as Jira
+name: julianna
+description: Independently operated Julianna project management application
 
 # A chart can be either an 'application' or a 'library' chart.
 #

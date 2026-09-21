@@ -17,8 +17,8 @@
 
         <div class="row">
             <div class="col-md-6">
-                @can('users.create')
-                <x-global::forms.button tag="a" link="{{ BASE_URL }}/users/newUser" contentRole="primary" class="userEditModal"><i class='fa fa-plus'></i> {!! __('buttons.add_user') !!} </x-global::forms.button>
+                @can('users.approve')
+                <x-global::forms.button tag="a" link="{{ BASE_URL }}/users/approvals" contentRole="primary"><i class='fa fa-user-check'></i> {{ __('buttons.review_signups') }}</x-global::forms.button>
                 @endcan
             </div>
             <div class="col-md-6 align-right">

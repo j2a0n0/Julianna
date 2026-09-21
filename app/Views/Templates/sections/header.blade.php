@@ -11,12 +11,13 @@
 <meta name="color-scheme" content="{{ $themeColorMode }}">
 <meta name="theme" content="{{ $theme }}">
 <meta name="identifier-URL" content="{!! BASE_URL !!}">
-<meta name="leantime-version" content="{{ $version }}">
+<meta name="application-name" content="Julianna">
+<meta name="julianna-version" content="{{ $version }}">
 
 @dispatchEvent('afterMetaTags')
 
-<link rel="shortcut icon" href="{!! BASE_URL !!}/dist/images/favicon.png"/>
-<link rel="apple-touch-icon" href="{!! BASE_URL !!}/dist/images/apple-touch-icon.png">
+<link rel="icon" type="image/svg+xml" href="{!! BASE_URL !!}/dist/images/favicon.svg"/>
+<link rel="apple-touch-icon" href="{!! BASE_URL !!}/dist/images/favicon.svg">
 
 @php
     // Cache-buster: the filenames only change per app version, so rebuilds of

@@ -1,4 +1,4 @@
-<h1>Latest From Leantime</h1>
+<h1>Julianna News</h1>
 <br />
 <div>
     <ul>

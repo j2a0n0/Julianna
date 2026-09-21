@@ -6,7 +6,7 @@
 
 ## Goal
 
-Route **all** of Leantime's HTML through a central component layer so that a future design
+Route **all** of Julianna's HTML through a central component layer so that a future design
 overhaul (e.g. daisyUI) becomes a one-file change instead of an N-thousand-call-site change.
 
 ## The rules (how we do this safely)
@@ -141,7 +141,7 @@ Status: ⬜ todo · 🟡 in progress · ✅ no-op done (on master) · 🎨 desig
 | `feature/ui-components` | fresh (Feb 2026) | richest reference: daisyUI theme, full category layer, 11/12 P0, domain cards, JS modules | reference; broke features as a big-bang — harvest APIs, don't merge |
 | `refactor/table-component` | ~2024 | **best forms/table/form-field + prop IDL + `Table.php`** | reference |
 | `selectsComponentUpdates` | Jan 2025 | superset forms incl. chip/datepicker/select + 113 call-site examples | reference |
-| `feature/leantime-design-tokens` | 2024 | daisyUI theme + Material-3 palette token values | reference (for design phase) |
+| `feature/julianna-design-tokens` | 2024 | daisyUI theme + Material-3 palette token values | reference (for design phase) |
 | modal line (`feature/modal-component`) | 2024 | `<dialog>` + hash-routed global page-modal pattern | reference (rebuild on HxComponent) |
 | `refactor/javascript-to-modules-…` | 2024 | full domain-JS ESM conversion (still pending eventually) | reference |
 | `feature/card-component`, `feature/table-component`, `left-nav-design-fix`, `file-component`, `button/text-input/checkbox-radio-component`, `commentsComponent` | 2024 | stale/subsumed | reference at most |
@@ -182,7 +182,7 @@ tags for `<?php` / `<?=` before committing.
 
 1. Read what the primitive renders today (classes, JS hooks, every call-site shape).
 2. Build the **no-op** component under the right category, full prop IDL, mapping to today's classes.
-3. `php bin/leantime view:cache` + `vendor/bin/pint --test` (syntactic gate).
+3. `php bin/julianna view:cache` + `vendor/bin/pint --test` (syntactic gate).
 4. Migrate a **small pilot** batch of call-sites; **Playwright before/after** to prove zero visual diff.
 5. Migrate the rest in batches, re-verifying; commit per batch.
 6. Update this tracker (status, gotchas, call-site count migrated).
@@ -203,7 +203,7 @@ class set / behavior. Categories found (to revisit, some need a design decision)
   **already looked primary**. Migrated to `contentRole="primary"` (~30 of them). **Intended visual no-op**, not
   strictly byte-identical: the component adds the shared `.btn` base (`input.btn { vertical-align: top; … }`)
   which a bare submit lacked — imperceptible, but worth stating precisely.
-- **Unmapped btn variants** — `btn-sm`/`btn-lg` (vs Leantime `btn-small`/`btn-large`),
+- **Unmapped btn variants** — `btn-sm`/`btn-lg` (vs Julianna `btn-small`/`btn-large`),
   `btn-danger-outline`, `btn-circle`, `btn-inverse`, `btn-file`. Add mappings (after confirming CSS) or keep deferred.
 - **role+state combo** (`btn btn-default btn-success`) — component currently emits one color; allow coexistence.
 - ~~`<a onclick>` without `href`~~ — DONE: component emits `href` only when `link` is set; migrate these by omitting the `link` prop.
@@ -300,7 +300,7 @@ Only visually-distinct treatments earn a variant. Verdicts:
   `@prop`, so Blade extracts it from the attribute bag → exactly one `type`, no duplication. (`forms.button`
   keeps `inputType` because it's polymorphic — `type` is ambiguous across a/button/input.)
   (2) **dropped `variant="form"`** (the `form`/`bordered`→`.form-control` arm). 3-agent CSS audit proved
-  `.form-control` is cosmetically redundant in Leantime: `forms.css` element selectors (`input[type=text]…`,
+  `.form-control` is cosmetically redundant in Julianna: `forms.css` element selectors (`input[type=text]…`,
   loaded after Bootstrap) override its bg/border/radius/shadow/padding/height/color, and the only residual
   effect (desktop `width:100%`) is already supplied by container rules (`.regpanelinner input{width:100%}`)
   for the sole 7 call-sites (login ×2, twoFA/verify ×1, install ×4 — all entry pages). No JS hooks
@@ -327,7 +327,7 @@ Only visually-distinct treatments earn a variant. Verdicts:
   like `vertical-align`, imperceptible), 4 token-UI text inputs/buttons, Errors back ×4,
   support sponsor, Auth token UI (create/copy/close/delete), Files cancel ×2, widgetManager reset
   (btn-outline→secondary), Reports chart toggles ×6, showProject delete (btn-danger-outline→state=danger
-  variant=outline), 1 comment reply. `btn-sm`/`btn-lg`/`btn-secondary` (own CSS, ≠ Leantime's
+  variant=outline), 1 comment reply. `btn-sm`/`btn-lg`/`btn-secondary` (own CSS, ≠ Julianna's
   small/large/outline) passed through `class=` pending a design-phase scale/role mapping.
   **Left deferred (correct):** 3 comment `btn-success` role+state combos (component emits one color);
   `partials/subtasks` quickadd (nested `__("…")` + HTMX file); dynamic-class links (calendarSettings,

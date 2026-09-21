@@ -2,8 +2,8 @@
 
 namespace Leantime\Domain\Auth\Controllers;
 
-use Laravel\Socialite\Facades\Socialite;
 use Leantime\Core\Controller\Controller;
+use Leantime\Core\Controller\Frontcontroller;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -18,6 +18,6 @@ class Redirect extends Controller
      */
     public function get(array $params): Response
     {
-        return Socialite::driver('github')->setScopes(['user:email'])->redirect();
+        return Frontcontroller::redirect(BASE_URL.'/auth/login');
     }
 }

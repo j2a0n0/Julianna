@@ -261,18 +261,18 @@ class Ldap
         $department = isset($entries[0][strtolower($this->ldapKeys->department)]) ? $entries[0][strtolower($this->ldapKeys->department)][0] : '';
 
         if ($this->config->debug) {
-            Log::debug("LEANTIME: Testing the logging\n");
+            Log::debug("JULIANNA: Testing the logging\n");
 
-            Log::debug("LEANTIME: >>>Attributes Begin>>>>>>\n");
-            Log::debug("LEANTIME: fn $firstname");
-            Log::debug("LEANTIME: sn $lastname");
-            Log::debug("LEANTIME: phone $phone");
-            Log::debug("LEANTIME: role $role");
-            Log::debug("LEANTIME: username $uname ");
-            Log::debug("LEANTIME: jobTitle $jobTitle ");
-            Log::debug("LEANTIME: jobLevel $jobLevel ");
-            Log::debug("LEANTIME: department $department ");
-            Log::debug("LEANTIME: >>>Attributes End>>>>>>\n");
+            Log::debug("JULIANNA: >>>Attributes Begin>>>>>>\n");
+            Log::debug("JULIANNA: fn $firstname");
+            Log::debug("JULIANNA: sn $lastname");
+            Log::debug("JULIANNA: phone $phone");
+            Log::debug("JULIANNA: role $role");
+            Log::debug("JULIANNA: username $uname ");
+            Log::debug("JULIANNA: jobTitle $jobTitle ");
+            Log::debug("JULIANNA: jobLevel $jobLevel ");
+            Log::debug("JULIANNA: department $department ");
+            Log::debug("JULIANNA: >>>Attributes End>>>>>>\n");
         }
 
         return [

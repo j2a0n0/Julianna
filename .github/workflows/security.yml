@@ -3,9 +3,9 @@ name: Security Audit
 on:
   workflow_dispatch:
   push:
-    branches: [ "master", "*.*-dev" ]
+    branches: [ "main", "master" ]
   pull_request:
-    branches: [ "master", "*.*-dev" ]
+    branches: [ "main", "master" ]
   schedule:
     - cron: '0 8 * * 1'  # Weekly on Monday at 8am UTC
 
@@ -26,8 +26,7 @@ jobs:
       run: composer install --no-dev --no-interaction --prefer-dist
 
     - name: Run Composer Audit
-      run: composer audit --format=summary
-      continue-on-error: true
+      run: composer audit --locked --format=summary --abandoned=ignore
 
   npm-audit:
     name: NPM Security Audit

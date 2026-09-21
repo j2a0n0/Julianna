@@ -25,7 +25,13 @@ class AuthCheck
     private array $publicActions = [
         'auth.login',
         'auth.resetPw',
-        'auth.userInvite',
+        'auth.register',
+        'auth.verifyEmail',
+        'auth.pending',
+        'auth.mfa',
+        'auth.recovery',
+        'auth.recoveryCodes',
+        'help.about',
         'install',
         'install.index',
         'install.update',
@@ -34,14 +40,9 @@ class AuthCheck
         'api.i18n',
         'api.static-asset',
         'calendar.ical',
-        'oidc.login',
-        'oidc.callback',
-        'oidc.mobile',
         'status',
         'status.index',
         'cron.run',
-        'auth.callback',
-        'auth.redirect',
     ];
 
     public function __construct(
@@ -174,7 +175,7 @@ class AuthCheck
             $user = app(\Leantime\Domain\Auth\Services\Auth::class)->getUserByToken($bearer);
 
             if (is_array($user) && ! empty($user['id'])) {
-                // Establish the Leantime user context the permission engine (and the rest of the
+                // Establish the application user context the permission engine (and the rest of the
                 // app) reads — session('userdata'). Deliberately NOT setting a request user
                 // resolver: leaving $request->user() null lets AuthenticateSession bail instead of
                 // calling viaRemember() on the non-session WebGuard, matching the x-api-key path.
@@ -191,7 +192,7 @@ class AuthCheck
 
     /**
      * Whether this client IP has exceeded the failed-authentication budget (shared with the
-     * login attempt limit, LEAN_RATELIMIT_AUTH). Counted per minute.
+     * configured API authentication attempt limit. Counted per minute.
      */
     protected function tooManyFailedAuthAttempts(IncomingRequest $request): bool
     {

@@ -10,11 +10,9 @@ use Leantime\Core\Events\DispatchesEvents;
 use Leantime\Core\Files\Contracts\FileManagerInterface;
 use Leantime\Domain\Ideas\Repositories\Ideas as IdeaRepository;
 use Leantime\Domain\Notifications\Models\Notification;
-use Leantime\Domain\Reports\Services\Reports as ReportService;
 use Leantime\Domain\Setting\Permissions\SettingPermissions;
 use Leantime\Domain\Setting\Repositories\Setting as SettingRepository;
 use Leantime\Domain\Tickets\Repositories\Tickets as TicketRepository;
-use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
@@ -142,22 +140,6 @@ class Setting
     public function setSettingsRepo(SettingRepository $settingsRepo): void
     {
         $this->settingsRepo = $settingsRepo;
-    }
-
-    /**
-     * Gets the company id (Sets if it's not set)
-     *
-     **/
-    public function getCompanyId(): string
-    {
-        $companyId = $this->getSetting('companysettings.telemetry.anonymousId');
-
-        if (! $companyId) {
-            $companyId = Uuid::uuid4()->toString();
-            $this->saveSetting('companysettings.telemetry.anonymousId', $companyId);
-        }
-
-        return $companyId;
     }
 
     public function onboardingHandler()
@@ -297,7 +279,6 @@ class Setting
             'secondarycolor' => session('companysettings.secondarycolor') ?? '',
             'name' => session('companysettings.sitename'),
             'language' => session('companysettings.language'),
-            'telemetryActive' => true,
             'messageFrequency' => '',
         ];
 
@@ -360,13 +341,11 @@ class Setting
      *
      * Owns the post-time persistence: look & feel (color save + legacy mainColor
      * cleanup + session sync), main details (sitename/language/messageFrequency),
-     * localization cache invalidation, notification event-type filtering and
-     * relevance validation, session sync, and telemetry opt-out orchestration.
+     * localization cache invalidation, notification event-type filtering,
+     * relevance validation, and session sync.
      *
      * @param  array<string, mixed>  $params  The submitted form parameters.
      * @return bool True when a settings block was persisted, false when nothing changed.
-     *
-     * @throws \Exception When telemetry opt-out fails.
      *
      * @api
      */
@@ -423,15 +402,6 @@ class Setting
 
             session(['companysettings.sitename' => htmlspecialchars(addslashes($params['name']))]);
             session(['companysettings.language' => htmlentities(addslashes($params['language']))]);
-
-            if (! empty($params['telemetryActive'])) {
-                $this->settingsRepo->saveSetting('companysettings.telemetry.active', 'true');
-            } else {
-                // Set remote telemetry to false.
-                // Resolved lazily to avoid a circular service dependency
-                // (ReportService depends on this Setting service).
-                app()->make(ReportService::class)->optOutTelemetry();
-            }
 
             $saved = true;
         }

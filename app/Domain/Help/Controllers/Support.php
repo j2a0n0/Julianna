@@ -3,6 +3,7 @@
 namespace Leantime\Domain\Help\Controllers;
 
 use Leantime\Core\Controller\Controller;
+use Leantime\Core\Controller\Frontcontroller;
 use Leantime\Domain\Help\Services\Helper;
 
 class Support extends Controller
@@ -21,7 +22,7 @@ class Support extends Controller
     public function get($params)
     {
 
-        return $this->tpl->display('help.support');
+        return Frontcontroller::redirect(BASE_URL.'/help/about');
 
     }
 }

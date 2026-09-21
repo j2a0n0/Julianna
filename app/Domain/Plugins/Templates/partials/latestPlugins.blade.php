@@ -1,6 +1,6 @@
 
-<h1>Latest Plugin Updates</h1>
-<p>Extend Leantime using our latest plugins.<br /><a href="{{ BASE_URL }}/plugins/marketplace"><i class="fa fa-cogs"></i> Manage Your Apps</a></p><br />
+<h1>Local Plugin Updates</h1>
+<p>Julianna loads only locally reviewed plugins.<br /><a href="{{ BASE_URL }}/plugins/myapps"><i class="fa fa-cogs"></i> Manage Local Plugins</a></p><br />
 
 <br />
 <div>

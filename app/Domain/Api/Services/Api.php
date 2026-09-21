@@ -6,12 +6,14 @@ use Exception;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Illuminate\Validation\UnauthorizedException;
 use Leantime\Core\Auth\Permissions\RequiresPermission;
 use Leantime\Core\Events\DispatchesEvents;
 use Leantime\Domain\Api\Contracts\StaticAssetType;
 use Leantime\Domain\Api\Permissions\ApiPermissions;
 use Leantime\Domain\Api\Repositories\Api as ApiRepository;
 use Leantime\Domain\Auth\Services\UserSessionBuilder;
+use Leantime\Domain\Auth\Support\SecureAuthRequest;
 use Leantime\Domain\Menu\Repositories\Menu as MenuRepository;
 use Leantime\Domain\Projects\Repositories\Projects as ProjectRepository;
 use Leantime\Domain\Users\Repositories\Users as UserRepository;
@@ -67,13 +69,13 @@ class Api
         $user = $apiKeyParts[1];
         $key = $apiKeyParts[2];
 
-        if ($namespace != 'lt') {
+        if ($namespace != 'jul') {
             return false;
         }
 
         $apiUser = $this->apiRepository->getAPIKeyUser($user);
 
-        if ($apiUser) {
+        if ($apiUser && strtolower((string) ($apiUser['status'] ?? '')) === 'a') {
             if (password_verify($key, $apiUser['password'])) {
 
                 $this->setApiUserSession($apiUser, true);
@@ -125,6 +127,10 @@ class Api
     #[RequiresPermission(ApiPermissions::MANAGE, global: true)]
     public function createAPIKey(array $values): bool|array
     {
+        if (! SecureAuthRequest::hasFullWebAuthentication()) {
+            throw new UnauthorizedException('A fully authenticated Julianna browser session is required.');
+        }
+
         $user = $this->randomStr(32);
         $password = $this->randomStr(32);
 
@@ -454,6 +460,8 @@ class Api
 
             return false;
         }
+
+        $fullpath = (string) $fullpath;
 
         if (Str::contains($fullpath, '.phar') && ! Str::startsWith($fullpath, 'phar://')) {
             $fullpath = 'phar://'.$fullpath;

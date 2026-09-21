@@ -28,8 +28,6 @@ class Welcome extends HtmxController
      */
     public function get()
     {
-        $this->dashboardService->sendAnonymousTelemetry();
-
         $welcomeData = $this->dashboardService->getWelcomeWidgetData((int) session('userdata.id'));
 
         array_map([$this->tpl, 'assign'], array_keys($welcomeData), array_values($welcomeData));

@@ -2,12 +2,11 @@ name: Feature request
 description: Suggest an idea for this project.
 title: "Enter title of your feature suggestion"
 type: "Feature"
-assignees: 
-  - marcelfolaron
+assignees: []
 body:
   - type: markdown
     attributes:
-      value: "Thank you for taking the time to submit a feature request. If you have problems with the installation or other questions please use the [discussion forum](https://github.com/Leantime/leantime/discussions) or our [discord server](https://discord.gg/4zMzJtAq9z)"
+      value: "Thank you for taking the time to suggest an improvement to Julianna."
   - type: dropdown
     attributes:
       label: What is your set up? 

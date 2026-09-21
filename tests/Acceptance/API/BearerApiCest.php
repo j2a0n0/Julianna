@@ -35,7 +35,7 @@ class BearerApiCest
     public function _before(AcceptanceTester $I, Install $installPage)
     {
         // Fresh install — same fixture as ApiCest so this Cest can run standalone or alongside it.
-        $installPage->install('test@leantime.io', 'Test123456!', 'John', 'Smith', 'Smith & Co');
+        $installPage->install('owner@julianna.test', 'JuliannaTest123!', 'John', 'Smith', 'Smith & Co');
     }
 
     #[Group('bearer-api')]
@@ -57,7 +57,7 @@ class BearerApiCest
         //    AccessTokenRepository::createToken persists it. (Done via the Db module because the
         //    Laravel container is not reliably bootstrapped against the test DB in the acceptance
         //    process, so app()->getUserByEmail() resolves the wrong connection.)
-        $userId = $I->grabFromDatabase('zp_user', 'id', ['username' => 'test@leantime.io']);
+        $userId = $I->grabFromDatabase('zp_user', 'id', ['username' => 'owner@julianna.test']);
         Assert::assertNotEmpty($userId, 'Test user not found after install');
 
         $this->bearerToken = bin2hex(random_bytes(20)); // 40-char opaque token
@@ -193,7 +193,7 @@ class BearerApiCest
         // Seed a notification owned by the OWNER, read=1, then — as the editor — try to flip it
         // unread by its id. With the previous unscoped where('id') update this would succeed; now
         // it must NOT: the result is false and the row stays read.
-        $ownerId = (int) $I->grabFromDatabase('zp_user', 'id', ['username' => 'test@leantime.io']);
+        $ownerId = (int) $I->grabFromDatabase('zp_user', 'id', ['username' => 'owner@julianna.test']);
         $ownerNotifId = (int) $I->haveInDatabase('zp_notifications', [
             'userId' => $ownerId,
             'read' => 1,

@@ -4,6 +4,7 @@ namespace Acceptance;
 
 use Codeception\Attribute\Depends;
 use Codeception\Attribute\Group;
+use PHPUnit\Framework\Assert;
 use Tests\Support\AcceptanceTester;
 use Tests\Support\Page\Acceptance\Login;
 
@@ -11,7 +12,7 @@ class TimesheetCest
 {
     public function _before(AcceptanceTester $I, Login $loginPage): void
     {
-        $loginPage->login('test@leantime.io', 'Test123456!');
+        $loginPage->login('owner@julianna.test', 'JuliannaTest123!');
     }
 
     /**
@@ -177,16 +178,19 @@ class TimesheetCest
 
         $I->amOnPage('/timesheets/showMyList');
         $I->waitForElementVisible('#allTimesheetsTable');
-        $I->see('#1 - Edit');
+        $oneHourEntry = "//table[@id='allTimesheetsTable']//tr[td[3][@data-order='1']]//a[starts-with(@id, 'editTimesheet-')]";
+        $I->waitForElementVisible($oneHourEntry);
+        $editLinkId = (string) $I->grabAttributeFrom($oneHourEntry, 'id');
+        $timesheetId = (int) str_replace('editTimesheet-', '', $editLinkId);
 
-        $I->clickWithRetry('#editTimesheet-1');
+        $I->clickWithRetry('#'.$editLinkId);
         $I->waitForElementVisible('#hours');
         $I->fillField('#hours', 2);
         $I->clickWithRetry('.stdformbutton input[type=submit]');
         $I->waitForElement('.growl', 120);
 
         $I->seeInDatabase('zp_timesheets', [
-            'id' => '1',
+            'id' => $timesheetId,
             'hours' => 2,
         ]);
 
@@ -207,6 +211,10 @@ class TimesheetCest
     {
         $I->wantTo('Open ticket and add time');
 
+        $I->amOnPage('/timesheets/showMy');
+        $I->waitForElementVisible('#finalSum');
+        $totalBefore = (float) $I->grabTextFrom('#finalSum');
+
         $I->amOnPage('/#/tickets/showTicket/10');
         $I->waitForElementVisible('#ui-id-8');
         $I->clickWithRetry('#ui-id-8');
@@ -219,7 +227,7 @@ class TimesheetCest
         // Go and see if the total is correct.
         $I->amOnPage('/timesheets/showMy');
         $I->waitForElementVisible('#finalSum');
-        $I->seeInSource('<td id="finalSum">11</td>');
+        Assert::assertSame($totalBefore + 4.0, (float) $I->grabTextFrom('#finalSum'));
     }
 
     #[Group('timesheet')]
@@ -272,20 +280,20 @@ class TimesheetCest
 
         $I->amOnPage('/timesheets/showMyList');
         $I->waitForElementVisible('#allTimesheetsTable');
-        $I->see('#1 - Edit');
+        $I->waitForElementVisible('#allTimesheetsTable a[id^="editTimesheet-"]');
+        $editLinkId = (string) $I->grabAttributeFrom('#allTimesheetsTable a[id^="editTimesheet-"]', 'id');
 
-        $I->clickWithRetry('#editTimesheet-1');
+        $I->clickWithRetry('#'.$editLinkId);
         $I->waitForElementVisible('.delete');
         $I->clickWithRetry('.stdformbutton .delete');
 
-        $I->wait(5);
-        $I->see('Should the timesheet really be deleted?');
+        $I->waitForElementVisible('.nyroModalLink input[name="del"]', 30);
 
         $I->clickWithRetry('.nyroModalLink input[type=submit]');
 
         $I->waitForElementVisible('#allTimesheetsTable');
         $I->wait(5);
-        $I->cantSee('#1 - Edit');
+        $I->dontSeeElement('#'.$editLinkId);
     }
 
     /**

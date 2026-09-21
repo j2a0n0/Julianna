@@ -60,7 +60,7 @@ class Mailer
         if ($config->email != '') {
             $this->emailDomain = $config->email;
         } else {
-            $host = $_SERVER['HTTP_HOST'] ?? 'leantime';
+            $host = $_SERVER['HTTP_HOST'] ?? 'julianna.local';
             $this->emailDomain = 'no-reply@'.$host;
         }
 
@@ -111,7 +111,7 @@ class Mailer
             $this->mailAgent->isMail();
         }
 
-        $this->logo = ! session()->has('companysettings.logoPath') ? '/dist/images/logo_blue.png' : session('companysettings.logoPath');
+        $this->logo = ! session()->has('companysettings.logoPath') ? '/dist/images/logo_blue.svg' : session('companysettings.logoPath');
         $this->companyColor = ! session()->has('companysettings.primarycolor') ? '#006c9e' : session('companysettings.primarycolor');
 
         $this->language = $language;
@@ -217,16 +217,16 @@ class Mailer
         // The From display name must never carry user-controlled content (invite-spam abuse
         // used attacker firstnames here). Callers pass fixed labels; sanitize regardless.
         $fromName = NameSanitizer::clean($from);
-        $fromDisplay = ($fromName === '' || strcasecmp($fromName, 'Leantime') === 0)
-            ? 'Leantime'
-            : $fromName.' (Leantime)';
+        $fromDisplay = ($fromName === '' || strcasecmp($fromName, 'Julianna') === 0)
+            ? 'Julianna'
+            : $fromName.' (Julianna)';
 
         $this->mailAgent->setFrom($this->emailDomain, $fromDisplay);
 
         $this->mailAgent->Subject = $this->subject;
 
         if (str_contains($this->logo, 'images/logo.svg')) {
-            $this->logo = '/dist/images/logo_blue.png';
+            $this->logo = '/dist/images/logo_blue.svg';
         }
 
         $logoParts = parse_url($this->logo);
@@ -237,9 +237,16 @@ class Mailer
         } else {
             if (file_exists(ROOT.''.$this->logo) && $this->logo != '' && is_file(ROOT.''.$this->logo)) {
                 // Logo comes from local file system
-                $this->mailAgent->addEmbeddedImage(ROOT.''.$this->logo, 'companylogo');
+                $logoMimeType = str_ends_with(strtolower($this->logo), '.svg') ? 'image/svg+xml' : '';
+                $this->mailAgent->addEmbeddedImage(
+                    ROOT.''.$this->logo,
+                    'companylogo',
+                    basename($this->logo),
+                    'base64',
+                    $logoMimeType
+                );
             } else {
-                $this->mailAgent->addEmbeddedImage(ROOT.'/dist/images/logo_blue.png', 'companylogo');
+                $this->mailAgent->addEmbeddedImage(ROOT.'/dist/images/logo_blue.svg', 'companylogo', 'logo.svg', 'base64', 'image/svg+xml');
             }
 
             $inlineLogoContent = 'cid:companylogo';

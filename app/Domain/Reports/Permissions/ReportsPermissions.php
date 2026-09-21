@@ -15,7 +15,7 @@ use Leantime\Core\Auth\Permissions\ProvidesPermissions;
  * with NO matrix edit. (Maintainer-approved loosening: the legacy /reports/show page gate was
  * editor+, which guarded nothing the lower roles couldn't already see.)
  *
- * The domain's system-level methods (cron ingestion and telemetry) are deliberately NOT part of
+ * The domain's system-level methods (such as cron ingestion) are deliberately NOT part of
  * this vocabulary: they run with no session user and are not RPC-exposed (de-@api'd), so there is
  * nothing to grant.
  */

@@ -11,6 +11,7 @@ use Leantime\Core\Events\DispatchesEvents;
 use Leantime\Core\Http\ApiRequest;
 use Leantime\Core\Http\IncomingRequest;
 use Leantime\Domain\Api\Services\Api;
+use Leantime\Domain\JuliannaAuth\Services\RateLimitKeyFactory;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -26,6 +27,8 @@ class RequestRateLimiter
 
     protected Environment $config;
 
+    protected RateLimitKeyFactory $authRateLimitKeys;
+
     /**
      * __construct
      * Constructor method for the class.
@@ -33,10 +36,14 @@ class RequestRateLimiter
      * @param  RateLimiter  $limiter  The RateLimiter object to be initialized.
      * @return void.
      */
-    public function __construct(Environment $config, RateLimiter $limiter)
-    {
+    public function __construct(
+        Environment $config,
+        RateLimiter $limiter,
+        RateLimitKeyFactory $authRateLimitKeys,
+    ) {
         $this->limiter = $limiter;
         $this->config = $config;
+        $this->authRateLimitKeys = $authRateLimitKeys;
     }
 
     /**
@@ -60,18 +67,18 @@ class RequestRateLimiter
         // on the lowercased route so a mixed-case path can't slip past the login or signup limiter.
         $route = strtolower($request->getCurrentRoute());
 
-        $isLoginRoute = $route === 'auth.login';
+        $isLoginPost = $route === 'auth.login' && $request->isMethod('POST');
+        $isMfaPost = in_array($route, ['auth.mfa', 'auth.recovery'], true)
+            && $request->isMethod('POST');
 
-        // Abuse-sensitive POSTs: self-serve workspace signup and user invites. These send email and
-        // provision resources, so the web form gets a tight per-IP budget (invite-spam abuse). The
-        // JSON-RPC invite path (an ApiRequest) is NOT caught here — it is an API request throttled at
-        // the API budget, and its real backstop is the per-user/per-tenant cap in
-        // Users::invitesRateLimited(), which is entry-point-agnostic.
-        $isSignupPost = in_array($route, ['accounts.register', 'accounts.newteam', 'users.newuser'], true)
+        // Abuse-sensitive POSTs: public signup and administrative user creation.
+        // The public form must stay within five requests per source IP per hour;
+        // using the same conservative budget for the administrative form is safe.
+        $isSignupPost = in_array($route, ['auth.register', 'users.newuser'], true)
             && $request->isMethod('POST');
 
         // Only check rate limits for login page, signup/invite posts, api calls, and the MCP endpoint
-        if (! $isLoginRoute && ! $isSignupPost && ! $request->isApiOrCronRequest() && ! $request->isMcpRequest()) {
+        if (! $isLoginPost && ! $isMfaPost && ! $isSignupPost && ! $request->isApiOrCronRequest() && ! $request->isMcpRequest()) {
             return $next($request);
         }
 
@@ -98,6 +105,8 @@ class RequestRateLimiter
         }
 
         $key = 'ratelimit-'.($request->getClientIp()).'-'.$keyModifier;
+        $keys = [$key];
+        $decaySeconds = 60;
 
         // General Limit per minute
         $limit = $rateLimitGeneral;
@@ -119,22 +128,43 @@ class RequestRateLimiter
             $limit = $rateLimitSignup;
             // Strictly per-IP: the signup form is unauthenticated (no session user id), and pinning
             // to IP alone stops one host from cycling sessions to widen its budget.
-            $key = 'ratelimit-'.($request->getClientIp()).':signup';
+            $key = $this->authRateLimitKeys->registration((string) $request->getClientIp());
+            $keys = [$key];
+            $decaySeconds = 3600;
         }
 
-        if ($isLoginRoute) {
+        if ($isLoginPost) {
             $limit = $rateLimitAuth;
-            $key = $key.':loginAttempts';
+            $email = mb_strtolower(trim((string) $request->input('username', $request->input('email', ''))), 'UTF-8');
+            $keys = [
+                $this->authRateLimitKeys->loginIp((string) $request->getClientIp()),
+                $this->authRateLimitKeys->loginIdentity((string) $request->getClientIp(), $email),
+            ];
+            $key = $keys[0];
+            $decaySeconds = 900;
 
         }
 
-        $key = self::dispatchFilter(
-            'rateLimitKey',
-            $key,
-            [
-                'bootloader' => $this,
-            ],
+        if ($isMfaPost) {
+            $limit = $rateLimitAuth;
+            $accountId = session('julianna_auth.account_id');
+            $keys = [$this->authRateLimitKeys->mfaIp((string) $request->getClientIp())];
+            if (is_numeric($accountId)) {
+                $keys[] = $this->authRateLimitKeys->mfaAccount((int) $accountId);
+            }
+            $key = $keys[0];
+            $decaySeconds = 900;
+        }
+
+        $keys = array_map(
+            fn (string $candidate): string => (string) self::dispatchFilter(
+                'rateLimitKey',
+                $candidate,
+                ['bootloader' => $this],
+            ),
+            $keys,
         );
+        $key = $keys[0];
 
         $limit = self::dispatchFilter(
             'rateLimit',
@@ -145,17 +175,23 @@ class RequestRateLimiter
             ],
         );
 
-        if ($this->limiter->tooManyAttempts($key, $limit)) {
-            Log::warning('too many requests per minute: '.$key);
+        foreach ($keys as $rateLimitKey) {
+            if (! $this->limiter->tooManyAttempts($rateLimitKey, $limit)) {
+                continue;
+            }
+
+            Log::warning('Too many requests for rate-limit bucket: '.$rateLimitKey);
 
             return new Response(
-                json_encode(['error' => 'Too many requests per minute.']),
+                json_encode(['error' => 'Too many requests. Try again later.']),
                 Response::HTTP_TOO_MANY_REQUESTS,
-                $this->getHeaders($key, (int) $limit),
+                $this->getHeaders($rateLimitKey, (int) $limit),
             );
         }
 
-        $this->limiter->hit($key, 60);
+        foreach ($keys as $rateLimitKey) {
+            $this->limiter->hit($rateLimitKey, $decaySeconds);
+        }
 
         return $next($request);
     }

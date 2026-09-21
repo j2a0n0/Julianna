@@ -33,23 +33,23 @@ Examples
 
 Show all plugins:
 
-    bin/leantime plugin:list
+    bin/julianna plugin:list
 
 Show only installed plugins:
 
-    bin/leantime plugin:list --installed=true
+    bin/julianna plugin:list --installed=true
 
 Show only non-installed plugins:
 
-    bin/leantime plugin:list --installed=false
+    bin/julianna plugin:list --installed=false
 
 Show only enabled plugins:
 
-    bin/leantime plugin:list --enabled=true
+    bin/julianna plugin:list --enabled=true
 
 Show plugins that are both installed and enabled:
 
-    bin/leantime plugin:list --installed=true --enabled=true
+    bin/julianna plugin:list --installed=true --enabled=true
 
 EOL);
     }

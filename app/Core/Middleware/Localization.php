@@ -66,6 +66,15 @@ class Localization
         session()->put('companysettings.language', $companyLanguage ?: $this->config->language);
 
         if (! $userId) {
+            // Preserve an explicitly selected, supported browser locale after
+            // logout. Fall back to the company locale only when no valid
+            // preference cookie exists.
+            $cookieLanguage = $_COOKIE['language'] ?? null;
+            $anonymousLanguage = is_string($cookieLanguage) && $this->language->isValidLanguage($cookieLanguage)
+                ? $cookieLanguage
+                : session('companysettings.language');
+            $this->language->setLanguage($anonymousLanguage);
+
             CarbonImmutable::mixin(new CarbonMacros(
                 $this->config->defaultTimezone,
                 str_replace('-', '_', session('companysettings.language')),
@@ -79,6 +88,7 @@ class Localization
         }
 
         session()->put('usersettings.language', ($settings["usersettings.$userId.language"] ?? false) ?: session('companysettings.language'));
+        $this->language->setLanguage(session('usersettings.language'));
         session()->put('usersettings.timezone', ($settings["usersettings.$userId.timezone"] ?? false) ?: $this->config->defaultTimezone);
         date_default_timezone_set(session('usersettings.timezone'));
 

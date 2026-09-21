@@ -95,7 +95,7 @@
                             <thead>
                                 <tr>
                                     <th>Plugin Version:</th>
-                                    <th>Compatible With Leantime Versions:</th>
+                                    <th>Compatible With Julianna Versions:</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -112,15 +112,7 @@
         </div>
 
         <div class="tw-flex tw-justify-between tw-items-center">
-            @if (! empty($plugin->marketplaceUrl))
-                <x-global::button
-                    :link="$plugin->marketplaceUrl"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >Get a license</x-global::button>
-            @else
-                <span>This plugin currently isn't available for purchase.</span>
-            @endif
+            <span>Remote plugin purchases are not available in Julianna.</span>
 
             @fragment('plugin-installation')
                 @if (! empty($plugin->marketplaceId))

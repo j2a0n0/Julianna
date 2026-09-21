@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "leantime.fullname" . }}
+  name: {{ include "julianna.fullname" . }}
   labels:
-    {{- include "leantime.labels" . | nindent 4 }}
+    {{- include "julianna.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "leantime.selectorLabels" . | nindent 6 }}
+      {{- include "julianna.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,13 +18,13 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "leantime.selectorLabels" . | nindent 8 }}
+        {{- include "julianna.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "leantime.serviceAccountName" . }}
+      serviceAccountName: {{ include "julianna.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -39,83 +39,75 @@ spec:
           - name: userfiles
             mountPath: "/var/www/html/userfiles"
           env:
-          - name: LEAN_DB_HOST
-            value: {{ .Release.Name }}-mariadb
-          - name: LEAN_SESSION_SECURE
-            value: "{{ .Values.app.leanSessionSecure }}"
-          - name: LEAN_DB_USER
-            value: {{ .Values.mariadb.auth.username }}
-          - name: LEAN_DB_PASSWORD
-            value: {{ .Values.mariadb.auth.password }}
-          - name: LEAN_DB_DATABASE
-            value: {{ .Values.mariadb.auth.database }}
-          - name: LEAN_SITENAME
-            value: {{ .Values.app.sitename }}
-          - name: LEAN_LANGUAGE
-            value: {{ .Values.app.language }}
-          - name: LEAN_DEFAULT_TIMEZONE
-            value: {{ .Values.app.defaultTimezone }}
+          - name: JULIANNA_ENV
+            value: "production"
+          - name: JULIANNA_APP_URL
+            value: {{ required "app.url is required" .Values.app.url | quote }}
+          - name: JULIANNA_SOURCE_URL
+            value: {{ required "app.sourceUrl is required" .Values.app.sourceUrl | quote }}
+          - name: JULIANNA_VERSION
+            value: {{ (.Values.image.tag | default .Chart.AppVersion) | trimPrefix "v" | quote }}
+          - name: JULIANNA_COMMIT
+            value: {{ required "app.commit is required" .Values.app.commit | quote }}
+          - name: JULIANNA_REGISTRATION_ENABLED
+            value: {{ .Values.app.registrationEnabled | quote }}
+          - name: JULIANNA_DB_HOST
+            value: {{ printf "%s-mariadb" .Release.Name | quote }}
+          - name: JULIANNA_SESSION_SECURE
+            value: {{ .Values.app.session.secure | quote }}
+          - name: JULIANNA_DB_USER
+            value: {{ .Values.mariadb.auth.username | quote }}
+          - name: JULIANNA_DB_PASSWORD
+            value: {{ .Values.mariadb.auth.password | quote }}
+          - name: JULIANNA_DB_DATABASE
+            value: {{ .Values.mariadb.auth.database | quote }}
+          - name: JULIANNA_SITENAME
+            value: {{ .Values.app.sitename | quote }}
+          - name: JULIANNA_LANGUAGE
+            value: {{ .Values.app.language | quote }}
+          - name: JULIANNA_DEFAULT_TIMEZONE
+            value: {{ .Values.app.defaultTimezone | quote }}
           {{- if .Values.app.s3.enabled }}
-          - name: LEAN_USE_S3
-            value: {{ .Values.app.s3.enabled }}
-          - name: LEAN_S3_END_POINT
-            value: {{ .Values.app.s3.endpoint }}
-          - name: LEAN_S3_KEY
-            value: {{ .Values.app.s3.key }}
-          - name: LEAN_S3_SECRET
-            value: {{ .Values.app.s3.secret }}
-          - name: LEAN_S3_BUCKET
-            value: {{ .Values.app.s3.bucket }}
-          - name: LEAN_S3_USE_PATH_STYLE_ENDPOINT
-            value: {{ .Values.app.s3.usePathStyleEndpoint }}
-          - name: LEAN_S3_REGION
-            value: {{ .Values.app.s3.region }}
-          - name: LEAN_S3_FOLDER_NAME
-            value: {{ .Values.app.s3.folderName }}
+          - name: JULIANNA_USE_S3
+            value: {{ .Values.app.s3.enabled | quote }}
+          - name: JULIANNA_S3_END_POINT
+            value: {{ .Values.app.s3.endpoint | quote }}
+          - name: JULIANNA_S3_KEY
+            value: {{ .Values.app.s3.key | quote }}
+          - name: JULIANNA_S3_SECRET
+            value: {{ .Values.app.s3.secret | quote }}
+          - name: JULIANNA_S3_BUCKET
+            value: {{ .Values.app.s3.bucket | quote }}
+          - name: JULIANNA_S3_USE_PATH_STYLE_ENDPOINT
+            value: {{ .Values.app.s3.usePathStyleEndpoint | quote }}
+          - name: JULIANNA_S3_REGION
+            value: {{ .Values.app.s3.region | quote }}
+          - name: JULIANNA_S3_FOLDER_NAME
+            value: {{ .Values.app.s3.folderName | quote }}
           {{- end }}
-          - name: LEAN_SESSION_PASSWORD
-            value: {{ .Values.app.session.password }}
-          - name: LEAN_SESSION_EXPIRATION
+          - name: JULIANNA_APP_KEY
+            value: {{ required "app.session.password is required" .Values.app.session.password | quote }}
+          - name: JULIANNA_SESSION_EXPIRATION
             value: {{ .Values.app.session.expiration | quote }}
           {{- if .Values.app.email.enabled }}
-          - name: LEAN_EMAIL_USE_SMTP
+          - name: JULIANNA_EMAIL_USE_SMTP
             value: {{ .Values.app.email.enabled | quote }}
-          - name: LEAN_EMAIL_RETURN
-            value: {{ .Values.app.email.return }}
-          - name: LEAN_EMAIL_SMTP_HOSTS
-            value: {{ .Values.app.email.smtp.hosts }}
-          - name: LEAN_EMAIL_SMTP_USERNAME
-            value: {{ .Values.app.email.smtp.username }}
-          - name: LEAN_EMAIL_SMTP_PASSWORD
-            value: {{ .Values.app.email.smtp.password }}
-          - name: LEAN_EMAIL_SMTP_AUTO_TLS
+          - name: JULIANNA_EMAIL_RETURN
+            value: {{ .Values.app.email.return | quote }}
+          - name: JULIANNA_EMAIL_SMTP_HOSTS
+            value: {{ .Values.app.email.smtp.hosts | quote }}
+          - name: JULIANNA_EMAIL_SMTP_USERNAME
+            value: {{ .Values.app.email.smtp.username | quote }}
+          - name: JULIANNA_EMAIL_SMTP_PASSWORD
+            value: {{ .Values.app.email.smtp.password | quote }}
+          - name: JULIANNA_EMAIL_SMTP_AUTH
+            value: {{ .Values.app.email.smtp.auth | quote }}
+          - name: JULIANNA_EMAIL_SMTP_AUTO_TLS
             value: {{ .Values.app.email.smtp.autoTLS | quote }}
-          - name: LEAN_EMAIL_SMTP_SECURE
-            value: {{ .Values.app.email.smtp.secure }}
-          - name: LEAN_EMAIL_SMTP_PORT
+          - name: JULIANNA_EMAIL_SMTP_SECURE
+            value: {{ .Values.app.email.smtp.secure | quote }}
+          - name: JULIANNA_EMAIL_SMTP_PORT
             value: {{ .Values.app.email.smtp.port | quote }}
-          {{- end }}
-          {{- if .Values.app.ldap.enabled }}
-          - name: LEAN_LDAP_USE_LDAP
-            value: {{ .Values.app.ldap.enabled | quote }}
-          - name: LEAN_LDAP_LDAP_TYPE
-            value: {{ .Values.app.ldap.type }}
-          - name: LEAN_LDAP_HOST
-            value: {{ .Values.app.ldap.host }}
-          - name: LEAN_LDAP_PORT
-            value: {{ .Values.app.ldap.port | quote }}
-          - name: LEAN_LDAP_BASE_DN
-            value: {{ .Values.app.ldap.baseDN }}
-          - name: LEAN_LDAP_DN
-            value: {{ .Values.app.ldap.DN }}
-          - name: LEAN_LDAP_USER_DOMAIN
-            value: {{ .Values.app.ldap.userDomain }}
-          - name: LEAN_LDAP_KEYS
-            value: {{ .Values.app.ldap.keys }}
-          - name: LEAN_LDAP_GROUP_ASSIGNMENT
-            value: {{ .Values.app.ldap.groupAssignment }}
-          - name: LEAN_LDAP_DEFAULT_ROLE_KEY
-            value: {{ .Values.app.ldap.defaultRoleKey }}
           {{- end }}
           ports:
             - name: http
@@ -134,10 +126,10 @@ spec:
       volumes:
       - name: pubuserfiles
         persistentVolumeClaim:
-          claimName: {{ include "leantime.fullname" . }}-publicuserfiles
+          claimName: {{ include "julianna.fullname" . }}-publicuserfiles
       - name: userfiles
         persistentVolumeClaim:
-          claimName: {{ include "leantime.fullname" . }}-userfiles
+          claimName: {{ include "julianna.fullname" . }}-userfiles
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

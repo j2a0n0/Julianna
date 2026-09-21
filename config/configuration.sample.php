@@ -15,7 +15,7 @@ class Config
 {
     /* General */
 
-    public $sitename = 'Leantime';                        // Name of your site, can be changed later
+    public $sitename = 'Julianna';                        // Name of your site, can be changed later
 
     public $language = 'en-US';                           // Default language
 
@@ -25,7 +25,15 @@ class Config
 
     public $appUrl = '';                                  // Base URL, trailing slash not needed
 
-    public $appDir = '';                                  // Base of application without trailing slash (used for cookies), e.g, /leantime
+    public $appDir = '';                                  // Base of application without trailing slash (used for cookies), e.g, /julianna
+
+    public $sourceUrl = '';                               // Public HTTPS URL for the exact source revision (required in production)
+
+    public $version = '1.0.0-dev';                        // Public application version
+
+    public $commit = 'unknown';                           // Source-control revision included in the build
+
+    public $env = 'production';                           // Application environment
 
     public $defaultTheme = 'default';                     // Default theme
 
@@ -33,13 +41,15 @@ class Config
 
     public $secondarycolor = '#00a886';                   // Secondary Theme Color
 
-    public $defaultTimezone = 'America/Los_Angeles';      // Set default timezone
+    public $defaultTimezone = 'Europe/Zurich';            // Set default timezone
 
     public $enableMenuType = false;                       // Enable to specify menu on a project-by-project basis
 
     public $debug = 0;                                    // Debug flag
 
     public $disableLoginForm = false;                     // If true then don't show the login form (useful only if additional auth method[s] are available)
+
+    public $registrationEnabled = true;                   // Whether public account registration is enabled
 
     /* Database */
     public $dbHost = 'localhost';                         // Database host
@@ -75,9 +85,11 @@ class Config
     public $s3EndPoint = null;                            // S3 EndPoint S3 Compatible (https://sfo2.digitaloceanspaces.com)
 
     /* Sessions */
-    public $sessionPassword = '3evBlq9zdUEuzKvVJHWWx3QzsQhturBApxwcws2m';  // Salting sessions. Replace with a strong password
+    public $sessionPassword = '';                         // App key: at least 32 random bytes; required in production
 
-    public $sessionExpiration = 28800;                    // How many seconds after inactivity should we logout?  28800seconds = 8hours
+    public $sessionExpiration = 480;                      // Idle timeout in minutes (480 = 8 hours)
+
+    public $sessionSecure = true;                         // Require HTTPS-only session cookies in production
 
     /* Email */
     public $email = '';                                   // Return email address
@@ -167,5 +179,5 @@ class Config
           }
         }';
 
-    public $ldapDefaultRoleKey = 20;                      // Default Leantime Role on creation. (set to editor)
+    public $ldapDefaultRoleKey = 20;                      // Default Julianna Role on creation. (set to editor)
 }

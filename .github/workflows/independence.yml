@@ -1,0 +1,84 @@
+name: Independence Guard
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify branding, runtime, and release independence
+        run: bash scripts/check-independent-release.sh
+
+      - name: Validate production Compose configuration
+        env:
+          JULIANNA_APP_URL: https://julianna.example
+          JULIANNA_SOURCE_URL: https://github.com/example/julianna/tree/ci
+          JULIANNA_APP_KEY: base64:QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE=
+          JULIANNA_DB_PASSWORD: ci-only-password
+          JULIANNA_DB_ROOT_PASSWORD: ci-only-root-password
+        run: docker compose --file .docker/docker-compose.yml config --quiet
+
+      - name: Build the production image from this checkout
+        run: >-
+          docker build
+          --file .docker/Dockerfile
+          --build-arg JULIANNA_VERSION=ci
+          --build-arg JULIANNA_COMMIT=${GITHUB_SHA}
+          --build-arg JULIANNA_SOURCE_URL=https://github.com/${GITHUB_REPOSITORY}/tree/${GITHUB_SHA}
+          --tag julianna/app:ci
+          .
+
+      - name: Verify production image contents and guardrails
+        shell: bash
+        run: |
+          test "$(docker image inspect julianna/app:ci --format '{{.Config.User}}')" = "www-data"
+          test "$(docker image inspect julianna/app:ci --format '{{index .Config.Labels "org.opencontainers.image.source"}}')" = "https://github.com/${GITHUB_REPOSITORY}/tree/${GITHUB_SHA}"
+
+          docker run --rm --entrypoint sh julianna/app:ci -c '
+            test ! -d /var/www/html/vendor/phpunit &&
+            test ! -d /var/www/html/node_modules &&
+            test ! -d /var/www/html/tests &&
+            test ! -w /var/www/html/app/Domain &&
+            test ! -w /var/www/html/vendor &&
+            test ! -w /var/www/html/public/dist &&
+            test -w /var/www/html/storage &&
+            test -w /var/www/html/userfiles
+          '
+
+          docker run --rm --entrypoint php julianna/app:ci -r '
+            $manifest = json_decode(
+                file_get_contents("/var/www/html/public/dist/mix-manifest.json"),
+                true,
+                512,
+                JSON_THROW_ON_ERROR
+            );
+            foreach ($manifest as $asset) {
+                $path = parse_url($asset, PHP_URL_PATH);
+                if (!is_string($path) || !is_file("/var/www/html/public/dist".$path)) {
+                    fwrite(STDERR, "Missing built asset: ".$asset.PHP_EOL);
+                    exit(1);
+                }
+            }
+          '
+
+          if docker run --rm \
+            -e JULIANNA_ENV=production \
+            -e JULIANNA_APP_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef \
+            -e JULIANNA_SESSION_SECURE=true \
+            -e JULIANNA_SOURCE_URL= \
+            julianna/app:ci; then
+            echo "Production image accepted a missing source URL" >&2
+            exit 1
+          fi

@@ -6,7 +6,7 @@
                 {!! file_get_contents(ROOT . '/dist/images/svg/undraw_design_data_khdb.svg') !!}
             </div>
             <h1>Define your projects with ease</h1><br />
-            <p>Blueprints are your chance to make sense of all the data. Leantime has a variety of tools and canvases to define your project background via Business Model Canvases, SWOT Analysis or Empathy Maps.<br /><br />
+            <p>Blueprints are your chance to make sense of all the data. Julianna has a variety of tools and canvases to define your project background via Business Model Canvases, SWOT Analysis or Empathy Maps.<br /><br />
             If you don't know where to start we suggest you create a "Project Value Canvas". This canvas will answer the most important questions of your project:
 
                 Who is your customer? <br />

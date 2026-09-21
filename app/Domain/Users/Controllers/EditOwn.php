@@ -54,6 +54,11 @@ class EditOwn extends Controller
             if (isset($_POST['profileInfo'])) {
                 $tab = '#myProfile';
 
+                // The verified address belongs to Julianna's identity record.
+                // Email changes require a dedicated re-verification flow and
+                // cannot be smuggled through the legacy profile editor.
+                $_POST['user'] = (string) session('userdata.mail');
+
                 $result = $this->userService->saveOwnProfile($this->userId, $_POST);
 
                 if ($result === 'success') {
@@ -70,23 +75,7 @@ class EditOwn extends Controller
             // Save Password
             if (isset($_POST['savepw'])) {
                 $tab = '#security';
-
-                $result = $this->userService->changeOwnPassword(
-                    $this->userId,
-                    $_POST['currentPassword'],
-                    $_POST['newPassword'],
-                    $_POST['confirmPassword']
-                );
-
-                if ($result === 'success') {
-                    $this->tpl->setNotification($this->language->__('notifications.password_changed'), 'success', 'password_edited');
-                } elseif ($result === 'password_not_strong_enough') {
-                    $this->tpl->setNotification($this->language->__('notification.password_not_strong_enough'), 'error');
-                } elseif ($result === 'passwords_dont_match') {
-                    $this->tpl->setNotification($this->language->__('notification.passwords_dont_match'), 'error');
-                } else {
-                    $this->tpl->setNotification($this->language->__('notification.previous_password_incorrect'), 'error');
-                }
+                $this->tpl->setNotification($this->language->__('notifications.use_password_reset'), 'info');
             }
 
             if (isset($_POST['saveTheme'])) {

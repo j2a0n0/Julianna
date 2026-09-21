@@ -3,9 +3,9 @@ name: Unit Tests
 on:
   workflow_dispatch:
   push:
-    branches: [ "master", "*.*-dev" ]
+    branches: [ "main", "master" ]
   pull_request:
-    branches: [ "master", "*.*-dev" ]
+    branches: [ "main", "master" ]
 
 jobs:
   unit:

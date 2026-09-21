@@ -2,6 +2,7 @@
 
 namespace Unit\app\Domain\Api\Services;
 
+use Illuminate\Validation\UnauthorizedException;
 use Leantime\Domain\Api\Repositories\Api as ApiRepository;
 use Leantime\Domain\Api\Services\Api as ApiService;
 use Leantime\Domain\Menu\Repositories\Menu as MenuRepository;
@@ -17,6 +18,17 @@ use Unit\TestCase;
 class ApiServiceTest extends TestCase
 {
     use \Codeception\Test\Feature\Stub;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        session([
+            'userdata' => ['id' => 1, 'role' => 'owner'],
+            'julianna_auth.authenticated_account_id' => 1,
+            'julianna_auth.session_version' => 1,
+        ]);
+    }
 
     /**
      * Builds a real Api service, allowing each dependency to be overridden with
@@ -50,6 +62,18 @@ class ApiServiceTest extends TestCase
         $this->assertSame([5, 9], $result);
     }
 
+    public function test_disabled_api_key_cannot_authenticate(): void
+    {
+        $apiRepo = $this->make(ApiRepository::class, [
+            'getAPIKeyUser' => fn () => [
+                'status' => 'i',
+                'password' => password_hash('secret', PASSWORD_DEFAULT),
+            ],
+        ]);
+
+        $this->assertFalse($this->makeService(apiRepo: $apiRepo)->getAPIKeyUser('jul_machine_secret'));
+    }
+
     public function test_create_api_key_with_projects_sets_relations_when_projects_selected(): void
     {
         $editCalledWith = null;
@@ -77,6 +101,15 @@ class ApiServiceTest extends TestCase
         // id is cast to int when reconciling relations.
         $this->assertSame([77, ['3', '4']], $editCalledWith);
         $this->assertFalse($deleteCalled);
+    }
+
+    public function test_create_api_key_rejects_non_browser_credentials(): void
+    {
+        session()->flush();
+
+        $this->expectException(UnauthorizedException::class);
+
+        $this->makeService()->createAPIKey(['firstname' => 'Key']);
     }
 
     public function test_create_api_key_with_projects_clears_relations_when_leading_zero(): void
@@ -150,7 +183,7 @@ class ApiServiceTest extends TestCase
         $userRepo = $this->make(UserRepository::class, [
             'getUser' => fn () => [
                 'firstname' => 'Old',
-                'username' => 'lt_old',
+                'username' => 'jul_old',
                 'status' => 'i',
                 'role' => '10',
             ],
@@ -177,7 +210,7 @@ class ApiServiceTest extends TestCase
         $this->assertSame('New', $editUserCalledWith[0]['firstname']);
         $this->assertSame('a', $editUserCalledWith[0]['status']);
         $this->assertSame('20', $editUserCalledWith[0]['role']);
-        $this->assertSame('lt_old', $editUserCalledWith[0]['user']);
+        $this->assertSame('jul_old', $editUserCalledWith[0]['user']);
         $this->assertSame('api', $editUserCalledWith[0]['source']);
         $this->assertSame([12, ['7']], $editRelationsCalledWith);
     }
@@ -189,7 +222,7 @@ class ApiServiceTest extends TestCase
         $userRepo = $this->make(UserRepository::class, [
             'getUser' => fn () => [
                 'firstname' => 'Old',
-                'username' => 'lt_old',
+                'username' => 'jul_old',
                 'status' => 'i',
                 'role' => '10',
             ],

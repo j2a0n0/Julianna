@@ -60,7 +60,7 @@ class LoadConfig extends LoadConfiguration
 
                 // $leantimeConfig = $app->make(Environment::class);
 
-                // Add all laravel configs to leantime config
+                // Add all Laravel config values to the application config.
                 //                foreach ($laravelConfig->all() as $key => $value) {
                 //                    $leantimeConfig->set($key, $value);
                 //                }
@@ -68,7 +68,7 @@ class LoadConfig extends LoadConfiguration
                 // At this point we have the leantime config and loaded laravel configs
                 // Re-aranging and setting some of the laravel defaults that were not set
                 // as part of the file loader. Laravel config vars were already added.
-                $finalConfig = $this->mapLeantime2LaravelConfig($config);
+                $finalConfig = $this->mapApplicationToLaravelConfig($config);
 
                 // Additional adjustments
                 $finalConfig->set('APP_DEBUG', $finalConfig->get('debug') ? true : false);
@@ -167,18 +167,18 @@ class LoadConfig extends LoadConfiguration
     }
 
     /**
-     * Maps Leantime configuration options to Laravel configuration options.
+     * Maps Julianna configuration options to Laravel configuration options.
      *
      * @param  mixed  $config  The Laravel configuration object to map to.
      * @return mixed The updated Leantime configuration object with mapped values.
      */
-    protected function mapLeantime2LaravelConfig($config)
+    protected function mapApplicationToLaravelConfig($config)
     {
 
         $reflectionClass = new \ReflectionClass(DefaultConfig::class);
         $properties = $reflectionClass->getProperties();
 
-        // Parsing through all the leantime config options.
+        // Parse all application config options.
         // Default tracks a mapping via attributes
         foreach ($properties as $configVar) {
             $attributes = $configVar->getAttributes(LaravelConfig::class);
@@ -189,7 +189,7 @@ class LoadConfig extends LoadConfiguration
                 $defaultConfigkey = $configVar->name;
 
                 // set laravel config.
-                // Leantime env file has priority and can override previously defined laravel configs
+                // Julianna environment values override Laravel defaults.
                 $config->set($laravelConfigKey, $config->get($defaultConfigkey));
             }
         }

@@ -9,9 +9,9 @@ name: API Tests (Bearer auth)
 on:
   workflow_dispatch:
   push:
-    branches: [ "master", "*.*-dev" ]
+    branches: [ "main", "master" ]
   pull_request:
-    branches: [ "master", "*.*-dev" ]
+    branches: [ "main", "master" ]
 
 jobs:
   bearer-api:

@@ -22,8 +22,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         AboutCommand::add('Environment', [
-            'Leantime App Version' => fn () => $this->app->make(AppSettings::class)->appVersion,
-            'Leantime Db Version' => fn () => $this->app->make(AppSettings::class)->dbVersion,
+            'Julianna App Version' => fn () => $this->app->make(AppSettings::class)->appVersion,
+            'Julianna DB Version' => fn () => $this->app->make(AppSettings::class)->dbVersion,
         ]);
 
     }

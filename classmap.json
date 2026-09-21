@@ -117,7 +117,6 @@
     "leantime\\plugins\\llamadorian\\services\\storyTimeListener": "Leantime\\Plugins\\Llamadorian\\Services\\StoryTimeListener",
     "leantime\\plugins\\llamadorian\\services\\taskRecommendationListener": "Leantime\\Plugins\\Llamadorian\\Services\\TaskRecommendationListener",
     "leantime\\plugins\\llamadorian\\services\\taskSentimentListener": "Leantime\\Plugins\\Llamadorian\\Services\\TaskSentimentListener",
-    "leantime\\command\\addUserCommand": "Leantime\\Command\\AddUserCommand",
     "leantime\\command\\migrateCommand": "Leantime\\Command\\MigrateCommand",
     "leantime\\command\\runCronCommand": "Leantime\\Command\\RunCronCommand",
     "leantime\\command\\saveSettingCommand": "Leantime\\Command\\SaveSettingCommand",

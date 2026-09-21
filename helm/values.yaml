@@ -1,18 +1,18 @@
-# Default values for leantime.
+# Default values for julianna.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
 
 image:
-  # -- OCI image repository of the Leantime application
-  repository: leantime/leantime
-  # -- The pull policy of the Leantime OCI image applied to the deployment
+  # -- OCI image repository of the Julianna application
+  repository: julianna/app
+  # -- The pull policy of the Julianna OCI image applied to the deployment
   pullPolicy: IfNotPresent
-  # -- Overrides the image tag whose default is the chart appVersion
-  tag: "latest"
+  # -- Overrides the image tag; empty uses the chart appVersion
+  tag: ""
 
-# -- The pull secrets to be used if you want to use a Leantime application image hosted in a private registry
+# -- The pull secrets to be used if you want to use a Julianna application image hosted in a private registry
 imagePullSecrets: []
 # -- Overrides the name of the chart
 nameOverride: ""
@@ -23,18 +23,25 @@ fullnameOverride: ""
 persistence:
   # -- Enables or disables the persistence
   enabled: true
-  # -- Sets the size of the PVs for Leantime's public and private userfiles
+  # -- Sets the size of the PVs for Julianna's public and private userfiles
   size: 5Gi
-  # -- Sets the storage class for Leantime's volumes
+  # -- Sets the storage class for Julianna's volumes
   # -- empty will use system default
   storageClass: ""
 
 # Application-specific environment variables
 app:
+  # -- Production application origin. Required by the deployment template.
+  url: ""
+  # -- Public HTTPS URL of the exact source tag deployed. Required.
+  sourceUrl: ""
+  # -- Source commit embedded in the image/release metadata.
+  commit: ""
+  # -- Public signup is also gated by complete SMTP configuration at runtime.
+  registrationEnabled: false
   # -- Sets the name for the instance
-  sitename: "Leantime"
+  sitename: "Julianna"
   # -- Sets the cookie flag to only allow HTTPS transfer.
-  leanSessionSecure: "true"
   # -- Sets application language
   language: "en-US"
   # -- Sets the default Timezone
@@ -43,7 +50,7 @@ app:
     # -- Set to true if you want to use S3 instead of local files
     enabled: false
     # -- S3 endpoint
-    enpoint: ""
+    endpoint: ""
     # -- S3 key
     key: ""
     # -- S3 secret
@@ -57,19 +64,21 @@ app:
     # -- Sets the foldername within S3 (can be empty)
     folderName: ""
   session:
-    # -- Salting sessions. Replace with a strong password
-    password: "changeme"
-    # -- Session expiration in MINUTES (must match the LEAN_SESSION_EXPIRATION
-    # -- semantics used elsewhere in Leantime: Laravel's `session.lifetime` is
+    # -- Base64 or raw application key containing at least 32 random bytes.
+    password: ""
+    # -- Secure cookie flag. Production startup requires true.
+    secure: true
+    # -- Session expiration in MINUTES (must match the JULIANNA_SESSION_EXPIRATION
+    # -- semantics used elsewhere in Julianna: Laravel's `session.lifetime` is
     # -- expressed in minutes, NOT seconds). 480 = 8 hours of idle timeout.
     # -- See: app/Core/Configuration/laravelConfig.php (`session.lifetime`) and
-    # -- config/sample.env (LEAN_SESSION_EXPIRATION).
+    # -- config/sample.env (JULIANNA_SESSION_EXPIRATION).
     expiration: 480
   email:
     # -- Set to true if you want to use SMTP. If set to false, the default php mail() function will be used
     enabled: false
     # -- Sets the email address to use for notifications and registrations
-    return: "leantime@cluster.local"
+    return: "julianna@cluster.local"
     smtp:
       # -- SMTP host
       hosts: ""
@@ -77,43 +86,23 @@ app:
       username: ""
       # -- SMTP password
       password: ""
+      # -- Whether the SMTP server requires authentication.
+      auth: true
       # -- Set autoTLS?
       autoTLS: true
       # -- Sets the SMTP security protocol (usually one of: TLS, SSL, STARTTLS)
-      secure: "STARTLS"
+      secure: "STARTTLS"
       # -- SMTP port
       port: 587
-  ldap:
-    # -- Set to true if you want to use LDAP
-    enabled: false
-    # -- Select the correct directory type. Currently Supported: OL - OpenLdap, AD - Active Directory
-    type: ""
-    # -- FQDN
-    host: ""
-    # -- Sets LDAP port
-    port: 389
-    # -- Base DN, example: DC=example,DC=com
-    baseDN: ""
-    # -- Location of users, example: CN=users,DC=example,DC=com
-    DN: ""
-    # -- Domain after ldap, example @example.com
-    userDomain: ""
-    # -- Default ldap keys in your directory
-    keys: ""
-    # -- Default role assignments upon first login
-    groupAssignment: ""
-    # -- Sets the default role for users when they are first created
-    defaultRoleKey: ""
-
 mariadb:
   enabled: true
   auth:
     # -- Database root password
     rootPassword: "changeme"
     # -- Database name
-    database: "leantime"
+    database: "julianna"
     # -- Database username
-    username: "leantime"
+    username: "julianna"
     # -- Database password
     password: "changeme"
 

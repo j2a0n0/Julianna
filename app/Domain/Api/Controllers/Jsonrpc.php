@@ -249,7 +249,7 @@ class Jsonrpc extends Controller
         }
 
         if ($jsonRpcVer !== '2.0') {
-            return $this->returnInvalidRequest('Leantime only supports JSON-RPC version 2.0', $id);
+            return $this->returnInvalidRequest('Julianna only supports JSON-RPC version 2.0', $id);
         }
 
         try {

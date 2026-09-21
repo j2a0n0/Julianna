@@ -8,6 +8,7 @@ use Laravel\Sanctum\Contracts\HasAbilities;
 use Laravel\Sanctum\HasApiTokens;
 use Leantime\Domain\Auth\Models\Roles;
 use Leantime\Domain\Auth\Repositories\AccessTokenRepository;
+use Leantime\Domain\Auth\Support\SecureAuthRequest;
 
 class AccessToken implements HasAbilities
 {
@@ -64,6 +65,9 @@ class AccessToken implements HasAbilities
 
     public function createToken($userId, $name = null)
     {
+        if (! SecureAuthRequest::hasFullWebAuthentication()) {
+            throw new UnauthorizedException('A fully authenticated Julianna browser session is required.');
+        }
 
         if ($userId == session('userdata.id') || Auth::userIsAtLeast(Roles::$admin)) {
 

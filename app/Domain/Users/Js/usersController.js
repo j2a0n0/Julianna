@@ -158,17 +158,15 @@ leantime.usersController = (function () {
         let password = document.getElementById(pwField)
         let strengthBadge = document.getElementById('pwStrength')
 
-        // The strong and weak password Regex pattern checker
-
-        let strongPassword = new RegExp('(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9])(?=.{8,})')
-        let mediumPassword = new RegExp('((?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9])(?=.{6,}))|((?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9])(?=.{8,}))')
-
         function StrengthChecker(PasswordParameter)
         {
-            if (strongPassword.test(PasswordParameter)) {
+            // This is a length hint only. Julianna deliberately does not
+            // require arbitrary upper/lower/number/symbol combinations.
+            let passwordLength = Array.from(PasswordParameter).length
+            if (passwordLength >= 16 && passwordLength <= 128) {
                 strengthBadge.style.backgroundColor = "#107530";
                 strengthBadge.textContent = leantime.i18n.__('label.strong');
-            } else if (mediumPassword.test(PasswordParameter)) {
+            } else if (passwordLength >= 12 && passwordLength <= 128) {
                 strengthBadge.style.backgroundColor = '#C5850D';
                 strengthBadge.textContent = leantime.i18n.__('label.medium');
             } else {

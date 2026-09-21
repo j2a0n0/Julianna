@@ -4,12 +4,9 @@ namespace Leantime\Domain\Users\Services;
 
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\RateLimiter;
 use Leantime\Core\Auth\Permissions\RequiresPermission;
-use Leantime\Core\Configuration\Environment;
 use Leantime\Core\Domains\BaseService;
 use Leantime\Core\Language as LanguageCore;
-use Leantime\Core\Mailer as MailerCore;
 use Leantime\Core\Support\Avatarcreator;
 use Leantime\Core\Support\NameSanitizer;
 use Leantime\Core\UI\Theme as ThemeCore;
@@ -18,6 +15,9 @@ use Leantime\Domain\Auth\Services\Auth;
 use Leantime\Domain\Auth\Services\Auth as AuthService;
 use Leantime\Domain\Clients\Repositories\Clients as ClientRepository;
 use Leantime\Domain\Files\Services\Files;
+use Leantime\Domain\JuliannaAuth\Enums\AccountState;
+use Leantime\Domain\JuliannaAuth\Repositories\AccountRepository;
+use Leantime\Domain\JuliannaAuth\Services\JuliannaAuth;
 use Leantime\Domain\Ldap\Services\Ldap as LdapService;
 use Leantime\Domain\Notifications\Models\Notification;
 use Leantime\Domain\Projects\Repositories\Projects as ProjectRepository;
@@ -25,7 +25,6 @@ use Leantime\Domain\Projects\Services\Projects as ProjectService;
 use Leantime\Domain\Setting\Services\Setting as SettingService;
 use Leantime\Domain\Users\Permissions\UsersPermissions;
 use Leantime\Domain\Users\Repositories\Users as UserRepository;
-use Ramsey\Uuid\Uuid;
 use SVG\SVG;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -44,7 +43,9 @@ class Users extends BaseService
         protected Avatarcreator $avatarcreator,
         protected SettingService $settingsService,
         protected ThemeCore $themeCore,
-        protected ProjectService $projectService
+        protected ProjectService $projectService,
+        protected AccountRepository $accountRepository,
+        protected JuliannaAuth $juliannaAuth,
     ) {}
 
     // GET
@@ -94,6 +95,27 @@ class Users extends BaseService
     #[RequiresPermission(UsersPermissions::EDIT, global: true)]
     public function editUser($values, $id): bool
     {
+        if (! is_array($values)) {
+            return false;
+        }
+
+        // Identity and credentials are owned by julianna_auth_accounts. The
+        // legacy user row remains an authorization/profile projection only.
+        unset($values['password'], $values['username'], $values['pwReset']);
+        $account = $this->accountRepository->findByUserId((int) $id);
+        if ($account !== null) {
+            $values['user'] = $account->email;
+            if ($account->state === AccountState::DISABLED) {
+                $values['status'] = 'i';
+            } elseif (isset($values['status']) && strtolower((string) $values['status']) !== 'a') {
+                $this->juliannaAuth->disable(
+                    $account->id,
+                    (int) session('userdata.id'),
+                );
+                $values['status'] = 'i';
+            }
+        }
+
         if (isset($values['firstname'])) {
             $values['firstname'] = NameSanitizer::clean($values['firstname']);
         }
@@ -192,7 +214,7 @@ class Users extends BaseService
      * closes the @api read paths (getUser is intentionally ungated so view
      * composers keep working — see above) without breaking login.
      *
-     * @see https://github.com/Leantime/leantime/issues/3556
+     * Preserve role-based authorization when the user record is updated.
      */
     private const SENSITIVE_USER_FIELDS = [
         'password',
@@ -325,11 +347,8 @@ class Users extends BaseService
 
     /**
      * checkPasswordStrength - Checks password strength for minimum requirements
-     * Current requirements are:
-     * Password must be at least 8 characters in length.
-     * Password must include at least one upper case letter.
-     * Password must include at least one number.
-     * Password must include at least one special character.
+     * Julianna accepts passwords from 12 through 128 characters and does not
+     * impose character-class composition rules.
      *
      * @param  string  $password  The string to be checked
      * @return bool returns true if password meets requirements
@@ -337,179 +356,30 @@ class Users extends BaseService
     public function checkPasswordStrength(string $password): bool
     {
 
-        // Validate password strength
-        // Password must be at least 8 characters in length.
-        // Password must include at least one upper case letter.
-        // Password must include at least one number.
-        // Password must include at least one special character.
+        $length = mb_strlen($password, 'UTF-8');
 
-        $uppercase = preg_match('@[A-Z]@', $password);
-        $lowercase = preg_match('@[a-z]@', $password);
-        $number = preg_match('@[0-9]@', $password);
-        $specialChars = preg_match('@[^\w]@', $password);
-
-        if (! $uppercase || ! $lowercase || ! $number || ! $specialChars || strlen($password) < 8) {
-            return false;
-        } else {
-            return true;
-        }
+        return $length >= 12 && $length <= 128;
     }
 
     /**
-     * createUserInvite - generates a new invite token, creates the user in the db and sends the invitation email TODO: Should accept userModel
-     *
-     * @param  array  $values  basic user values
-     * @return false|string returns the new user id on success, false on failure or
-     *                      when the invite rate limit is exhausted
-     *
-     * @throws BindingResolutionException
+     * Direct invitations and legacy user creation are disabled. Accounts enter
+     * through registration, verification, and administrative approval.
      *
      * @api
      */
     #[RequiresPermission(UsersPermissions::CREATE, global: true)]
     public function createUserInvite(array $values): false|string
     {
-        if ($this->invitesRateLimited()) {
-            return false;
-        }
-
-        $values['firstname'] = NameSanitizer::clean($values['firstname'] ?? '');
-        $values['lastname'] = NameSanitizer::clean($values['lastname'] ?? '');
-
-        // Generate strong password
-        $tempPasswordVar = Uuid::uuid4()->toString();
-        $inviteCode = Uuid::uuid4()->toString();
-
-        $values['password'] = $tempPasswordVar;
-        $values['status'] = 'i';
-        $values['pwReset'] = $inviteCode;
-
-        $result = $this->userRepo->addUser($values);
-
-        if ($result === false) {
-            return false;
-        }
-
-        $this->sendUserInvite($inviteCode, $values['user']);
-
-        return $result;
-    }
-
-    public function sendUserInvite(string $inviteCode, string $user)
-    {
-
-        $mailer = app()->make(MailerCore::class);
-        $mailer->setContext('new_user');
-
-        $mailer->setSubject($this->language->__('email_notifications.new_user_subject'));
-        $actual_link = BASE_URL.'/auth/userInvite/'.$inviteCode;
-
-        // The inviter identifies themselves in the body only (sanitized name + verified email);
-        // the From header stays a fixed 'Leantime' so user content never reaches mail headers.
-        $inviterName = NameSanitizer::clean(session('userdata.name') ?? '');
-        $inviterDisplay = $inviterName !== '' ? $inviterName : 'Leantime';
-
-        $inviterEmail = filter_var((string) (session('userdata.mail') ?? ''), FILTER_VALIDATE_EMAIL);
-        if ($inviterEmail !== false) {
-            $inviterDisplay .= ' ('.$inviterEmail.')';
-        }
-
-        // Every interpolated value is HTML-escaped with a fixed UTF-8 encoding (ENT_SUBSTITUTE
-        // replaces invalid byte sequences rather than emitting an empty string). The link sits
-        // inside a single-quoted href, so ENT_QUOTES is required even though it is system-built.
-        $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-
-        $message = sprintf(
-            $this->language->__('email_notifications.user_invite_message'),
-            $escape($inviterDisplay),
-            $escape($actual_link),
-            $escape($user)
-        );
-
-        $mailer->setHtml($message);
-
-        $to = [$user];
-
-        $mailer->sendMail($to, 'Leantime');
-    }
-
-    /**
-     * Checks and consumes the invite-email rate limit for the authenticated inviter.
-     *
-     * Caps invites per inviting user per hour and per installation per day so a single
-     * account cannot use invite emails as a spam channel. This is the entry-point-agnostic
-     * backstop: it covers the web form, JSON-RPC (leantime.rpc.*.inviteNewUser) and resend
-     * alike, because it runs in the service layer. The per-IP throttle in RequestRateLimiter
-     * is an additional layer for the unauthenticated/web signup form only.
-     *
-     * The counter records invite *attempts*, not successful sends: the token is consumed
-     * before the DB insert, so a subsequent insert failure still counts. This is deliberate —
-     * it fails safe (over-counts, never under-counts) and keeps the check side-effect-cheap.
-     *
-     * Not logged per attempt: a blocked attacker could otherwise amplify the block into log
-     * spam. Enforcement is the RateLimiter itself; aggregate abuse monitoring belongs elsewhere.
-     *
-     * @return bool True when the limit is exhausted and no invite may be sent.
-     */
-    private function invitesRateLimited(): bool
-    {
-        $inviterId = (int) (session('userdata.id') ?? 0);
-        if ($inviterId === 0) {
-            return false;
-        }
-
-        $config = app()->make(Environment::class);
-        $userLimit = (int) ($config->ratelimitInvitesUser ?? 10);
-        $tenantLimit = (int) ($config->ratelimitInvitesTenant ?? 30);
-
-        // BASE_URL is defined for every web/console entry (LoadConfig / SetRequestForConsole) and
-        // namespaces the counters per install/tenant so keys never collide across workspaces.
-        $userKey = 'invites:'.BASE_URL.':user:'.$inviterId;
-        $tenantKey = 'invites:'.BASE_URL.':tenant';
-
-        if (RateLimiter::tooManyAttempts($userKey, $userLimit)
-            || RateLimiter::tooManyAttempts($tenantKey, $tenantLimit)) {
-            return true;
-        }
-
-        RateLimiter::hit($userKey, 3600);
-        RateLimiter::hit($tenantKey, 86400);
-
         return false;
     }
 
     /**
-     * addUser - simple service wrapper to create a new user
-     *
-     * TODO: Should accept userModel
-     *
-     * @param  array  $values  basic user values
-     * @return bool|int returns new user id on success, false on failure
-     *
      * @api
      */
     #[RequiresPermission(UsersPermissions::CREATE, global: true)]
     public function addUser(array $values): bool|int
     {
-        $values = [
-            'firstname' => NameSanitizer::clean($values['firstname'] ?? ''),
-            'lastname' => NameSanitizer::clean($values['lastname'] ?? ''),
-            'phone' => $values['phone'] ?? '',
-            'user' => $values['username'] ?? $values['user'],
-            'role' => $values['role'],
-            'notifications' => $values['notifications'] ?? 1,
-            'clientId' => $values['clientId'] ?? '',
-            'password' => $values['password'],
-            'source' => $values['source'] ?? '',
-            'pwReset' => $values['pwReset'] ?? '',
-            'status' => $values['status'] ?? '',
-            'createdOn' => $values['createdOn'] ?? '',
-            'jobTitle' => $values['jobTitle'] ?? '',
-            'jobLevel' => $values['jobLevel'] ?? '',
-            'department' => $values['department'] ?? '',
-        ];
-
-        return $this->userRepo->addUser($values);
+        return false;
     }
 
     /**
@@ -548,14 +418,13 @@ class Users extends BaseService
         // Non-privileged fields that any user can update on their own profile
         $selfPatchableFields = [
             'firstname', 'lastname', 'phone', 'jobTitle', 'jobLevel',
-            'department', 'password', 'notifications',
+            'department', 'notifications',
         ];
 
         // Privileged fields that only admins/owners can set (on any user)
         $adminPatchableFields = [
             'firstname', 'lastname', 'phone', 'jobTitle', 'jobLevel',
-            'department', 'password', 'notifications', 'role', 'clientId',
-            'status', 'user',
+            'department', 'notifications', 'role', 'clientId', 'status',
         ];
 
         if ($this->can(UsersPermissions::EDIT, forceGlobal: true)) {
@@ -571,6 +440,19 @@ class Users extends BaseService
 
         if (empty($filteredParams)) {
             return false;
+        }
+
+        $account = $this->accountRepository->findByUserId($id);
+        if ($account !== null) {
+            if ($account->state === AccountState::DISABLED) {
+                $filteredParams['status'] = 'i';
+            } elseif (isset($filteredParams['status']) && strtolower((string) $filteredParams['status']) !== 'a') {
+                $this->juliannaAuth->disable(
+                    $account->id,
+                    (int) session('userdata.id'),
+                );
+                $filteredParams['status'] = 'i';
+            }
         }
 
         return $this->userRepo->patchUser($id, $filteredParams);
@@ -724,6 +606,9 @@ class Users extends BaseService
         $user = $this->userRepo->getUser($id);
 
         $this->authService->setUserSession($user);
+        session()->put('userdata.twoFAEnabled', true);
+        session()->put('userdata.twoFAVerified', true);
+        session()->put('userdata.twoFASecret', '');
 
         self::dispatch_event('editUser', ['id' => $id, 'values' => $values]);
     }
@@ -745,6 +630,14 @@ class Users extends BaseService
         // attribute defers (entityScoped), so this in-method check is the single source of
         // truth and throws AuthorizationException (RPC -32001 / 403) when denied.
         $this->authorize(UsersPermissions::DELETE, forceGlobal: true);
+
+        $account = $this->accountRepository->findByUserId($id);
+        if ($account !== null && $account->state === AccountState::ACTIVE) {
+            $this->juliannaAuth->disable(
+                $account->id,
+                (int) session('userdata.id'),
+            );
+        }
 
         $this->userRepo->deleteUser($id);
         $this->projectRepository->deleteAllProjectRelations($id);
@@ -999,7 +892,9 @@ class Users extends BaseService
         $values = [
             'firstname' => NameSanitizer::clean(($post['firstname']) ?? $row['firstname']),
             'lastname' => NameSanitizer::clean(($post['lastname']) ?? $row['lastname']),
-            'user' => ($post['user']) ?? $row['username'],
+            // Verified account email changes need a dedicated re-verification
+            // flow; v1 deliberately keeps the approved identity immutable.
+            'user' => $row['username'],
             'phone' => ($post['phone']) ?? $row['phone'],
             'notifications' => $row['notifications'],
             'twoFAEnabled' => $row['twoFAEnabled'],
@@ -1011,12 +906,6 @@ class Users extends BaseService
 
         if (! filter_var($values['user'], FILTER_VALIDATE_EMAIL)) {
             return 'no_valid_email';
-        }
-
-        $changedEmail = $row['username'] !== $values['user'];
-
-        if ($changedEmail && $this->usernameExist($values['user'], $userId) !== false) {
-            return 'user_exists';
         }
 
         $this->editOwn($values, $userId);
@@ -1044,40 +933,9 @@ class Users extends BaseService
      */
     public function changeOwnPassword(int $userId, string $currentPassword, string $newPassword, string $confirmPassword): string
     {
-        // Self-service: pin to the authenticated user (ignore any caller-supplied id — otherwise
-        // the RPC entry point is a current-password oracle / takeover vector against any account).
-        $userId = (int) session('userdata.id');
-
-        // Read from the repository, not the service getUser: the latter strips
-        // the password hash (and other secrets) for API safety (#3556), but the
-        // current-password check needs the real hash.
-        $row = $this->userRepo->getUser($userId);
-
-        if (! password_verify($currentPassword, $row['password'])) {
-            return 'previous_password_incorrect';
-        }
-
-        if ($newPassword !== $confirmPassword) {
-            return 'passwords_dont_match';
-        }
-
-        if (! $this->checkPasswordStrength($newPassword)) {
-            return 'password_not_strong_enough';
-        }
-
-        $values = [
-            'firstname' => $row['firstname'],
-            'lastname' => $row['lastname'],
-            'user' => $row['username'],
-            'phone' => $row['phone'],
-            'password' => $newPassword,
-            'notifications' => $row['notifications'],
-            'twoFAEnabled' => $row['twoFAEnabled'],
-        ];
-
-        $this->userRepo->editOwn($values, $userId);
-
-        return 'success';
+        // Credentials no longer live on zp_user. Retain the callable method for
+        // API compatibility, but never validate or mutate legacy password data.
+        return 'password_reset_required';
     }
 
     /**
@@ -1423,28 +1281,7 @@ class Users extends BaseService
     #[RequiresPermission(UsersPermissions::EDIT, global: true)]
     public function resendUserInvite(int $id, array $row): string
     {
-        if (session()->exists('lastInvite.'.$id) && session('lastInvite.'.$id) >= time() - 240) {
-            return 'too_soon';
-        }
-
-        if ($this->invitesRateLimited()) {
-            return 'too_many_invites';
-        }
-
-        session(['lastInvite.'.$id => time()]);
-
-        $pwReset = $row['pwReset'] ?? '';
-        if (empty($pwReset)) {
-            $pwReset = Uuid::uuid4()->toString();
-            $this->patchUser($id, ['pwReset' => $pwReset]);
-        }
-
-        $this->sendUserInvite(
-            inviteCode: $pwReset,
-            user: $row['username']
-        );
-
-        return 'sent';
+        return 'disabled';
     }
 
     /**

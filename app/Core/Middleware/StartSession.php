@@ -62,7 +62,7 @@ class StartSession
         // session object is created with the array handler from the start.
         // Browser AJAX requests (JS calling JSON-RPC) are excluded so they
         // continue to share the user's web session.
-        if ($request->isApiOrCronRequest() && ! $request->ajax()) {
+        if (($request->isApiOrCronRequest() || $request->isMcpRequest()) && ! $request->ajax()) {
             config(['session.driver' => 'array']);
             $this->manager->setDefaultDriver('array');
         }
@@ -408,13 +408,15 @@ class StartSession
 
     /**
      * Determine whether this request should persist its session to storage.
-     * API and cron requests are stateful-but-throwaway and are never persisted.
+     * API, MCP, and cron requests are stateful-but-throwaway and are never persisted.
      *
      * @return bool
      */
     protected function shouldPersistSession(IncomingRequest $request)
     {
-        return $request->isApiOrCronRequest() === false && $this->sessionConfigured();
+        return ! $request->isApiOrCronRequest()
+            && ! $request->isMcpRequest()
+            && $this->sessionConfigured();
     }
 
     /**

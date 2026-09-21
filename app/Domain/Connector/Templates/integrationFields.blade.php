@@ -36,14 +36,14 @@
 
                 {!! $tpl->displayNotification() !!}
                 <h5 class="subtitle">Match Fields</h5>
-                <p class="mb-2">Match the fields from your source to the corresponding fields in Leantime</p><br />
+                <p class="mb-2">Match the fields from your source to the corresponding fields in Julianna</p><br />
 
                 <form method="post" action="{{ BASE_URL }}/connector/integration/?provider={{ $provider->id }}&step=parse{{ $urlAppend }}">
                     <table class="table table-bordered">
                         <thead>
                         <tr>
                             <th class="center">Source Field</th>
-                            <th class="center">Leantime Field</th>
+                            <th class="center">Julianna Field</th>
                         </tr>
                         </thead>
                         <tbody>

@@ -2,8 +2,10 @@
 
 namespace Unit\app\Domain\Help\Services;
 
+use Leantime\Core\Auth\Permissions\PermissionService;
 use Leantime\Domain\Help\Services\Helper;
 use Leantime\Domain\Setting\Repositories\Setting;
+use Leantime\Domain\Tickets\Permissions\TicketsPermissions;
 use Unit\TestCase;
 
 /**
@@ -17,9 +19,32 @@ class HelperTest extends TestCase
     /**
      * Builds a Helper service with a stubbed Setting repository.
      */
-    private function makeService(): Helper
+    private function makeService(?PermissionService $permissions = null): Helper
     {
-        return new Helper($this->make(Setting::class));
+        return new Helper(
+            $this->make(Setting::class),
+            $permissions ?? $this->make(PermissionService::class),
+        );
+    }
+
+    public function test_default_project_bootstrap_is_skipped_without_ticket_create_permission(): void
+    {
+        session(['currentProject' => null]);
+        $checked = [];
+        $permissions = $this->make(PermissionService::class, [
+            'currentUserCan' => function (string $permission) use (&$checked): bool {
+                $checked[] = $permission;
+
+                return false;
+            },
+        ]);
+
+        // Reaching createDefaultProject() would resolve its project services
+        // and fail in this isolated test; returning cleanly proves the guard.
+        $this->makeService($permissions)->ensureDefaultProject(4, 'readonly');
+
+        $this->assertSame([TicketsPermissions::CREATE], $checked);
+        $this->assertNull(session('currentProject'));
     }
 
     public function test_resolve_first_login_step_returns_end_step(): void

@@ -2,12 +2,11 @@ name: Bug Report
 description: File a bug report.
 title: "Enter a title of your bug"
 type: "Bug"
-assignees: 
-  - marcelfolaron
+assignees: []
 body:
   - type: markdown
     attributes:
-      value: "Thank you for taking the time to submit a bug report. If you have problems with the installation or other questions please use the [discussion forum](https://github.com/Leantime/leantime/discussions) or our [discord server](https://discord.gg/4zMzJtAq9z)"
+      value: "Thank you for taking the time to submit a Julianna bug report. Please include enough detail for an independent maintainer to reproduce the issue."
   - type: dropdown
     attributes:
       label: What is your set up? 
@@ -21,8 +20,8 @@ body:
     id: version
     attributes:
       label: Version
-      description: "Which Leantime version are you using (see footer bottom right)"
-      placeholder: "3.x.x"
+      description: "Which Julianna version and commit are shown on the About page?"
+      placeholder: "1.x.x / commit"
     validations:
       required: true
   - type: textarea
@@ -46,7 +45,7 @@ body:
   - type: textarea
     id: context
     attributes:
-      label: Error Logs (LEANTIMEFOLDER/storage/logs)
+      label: Error logs (storage/logs)
       description: "Please past the contents of your error logs and any other logs you may have."
     validations:
       required: false

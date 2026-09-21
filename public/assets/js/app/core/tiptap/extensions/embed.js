@@ -103,7 +103,7 @@ function getEmbedUrl(url, type, id) {
 
         case 'figma':
             // Figma requires the full URL for embedding
-            return 'https://www.figma.com/embed?embed_host=leantime&url=' + encodeURIComponent(url);
+            return 'https://www.figma.com/embed?embed_host=julianna&url=' + encodeURIComponent(url);
 
         case 'miro':
             // Miro live embed - allows interaction if board permissions allow

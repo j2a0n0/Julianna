@@ -5,7 +5,7 @@
 
     @stack('styles')
     <style>
-        .leantimeLogo { position: fixed; bottom: 10px; right: 10px; }
+        .juliannaLogo { position: fixed; bottom: 10px; right: 10px; }
 
         .regcontent {
             width: auto;

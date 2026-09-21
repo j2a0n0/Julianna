@@ -5,6 +5,7 @@ namespace Leantime\Domain\Install\Controllers;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Leantime\Core\Controller\Controller;
 use Leantime\Core\Controller\Frontcontroller as FrontcontrollerCore;
+use Leantime\Domain\Auth\Support\SecureAuthRequest;
 use Leantime\Domain\Install\Services\Install as InstallService;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -43,6 +44,12 @@ class Index extends Controller
      */
     public function post($params): Response
     {
+        if (! SecureAuthRequest::hasValidCsrf($params)) {
+            $this->tpl->setNotification('notification.form_token_incorrect', 'error');
+
+            return FrontcontrollerCore::redirect(BASE_URL.'/install');
+        }
+
         if (isset($_POST['install'])) {
             $values = [
                 'email' => ($params['email']),
@@ -63,7 +70,7 @@ class Index extends Controller
                 $this->tpl->setNotification(sprintf($this->language->__('notifications.installation_success_setup_account'), BASE_URL), 'success');
 
                 if (session()->has('pwReset')) {
-                    return FrontcontrollerCore::redirect(BASE_URL.'/auth/userInvite/'.session('pwReset'));
+                    return FrontcontrollerCore::redirect(BASE_URL.'/auth/resetPw/'.session('pwReset'));
                 }
             } else {
                 $this->tpl->setNotification($this->language->__('notification.error_installing'), 'error');

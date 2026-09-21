@@ -5,20 +5,14 @@ namespace Leantime\Domain\Status\Controllers;
 use Leantime\Core\Configuration\AppSettings;
 use Leantime\Core\Configuration\Environment;
 use Leantime\Core\Controller\Controller;
-use Leantime\Core\Http\IncomingRequest;
-use Leantime\Domain\Plugins\Services\Plugins;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Public, unauthenticated instance status / discovery endpoint — GET /status.
  *
- * The mobile app calls this at connect time to discover which login methods the
- * instance offers (password / ldap / oidc), so it can show the right affordances
- * — notably the OIDC "Sign in with SSO" redirect, which stays dormant in the app
- * until a backend advertises it here. See the mobile client's
- * connectionService::fetchPublicStatus and
- * docs/backend-mobile-auth-bridge-plan.md for the contract.
+ * This endpoint advertises only Julianna's local password + mandatory MFA
+ * identity flow. Legacy LDAP/OIDC implementations cannot be enabled here.
  *
  * SECURITY — this endpoint is UNAUTHENTICATED, so it returns ONLY the safe,
  * minimal tier: auth methods, the core version + instance name, provider labels,
@@ -42,72 +36,32 @@ class Index extends Controller
 
     private AppSettings $appSettings;
 
-    private IncomingRequest $request;
-
-    private Plugins $plugins;
-
     /**
-     * init - inject config, app settings, the incoming request, and the plugin
-     * service (used to gate mobile-auth advertising on AdvancedAuth).
+     * init - inject public product configuration.
      */
-    public function init(Environment $config, AppSettings $appSettings, IncomingRequest $request, Plugins $plugins): void
+    public function init(Environment $config, AppSettings $appSettings): void
     {
         $this->config = $config;
         $this->appSettings = $appSettings;
-        $this->request = $request;
-        $this->plugins = $plugins;
     }
 
     /**
-     * Return the public discovery payload: enabled auth methods, the OIDC login
-     * URL (when enabled), instance name, core version, and min app version — the
-     * safe unauthenticated tier only. Never plugin inventory / versions / db
-     * version (see the class-level security note).
+     * Return the public discovery payload for Julianna's local identity flow —
+     * the safe unauthenticated tier only. Never plugin inventory, plugin
+     * versions, or database version (see the class-level security note).
      */
     public function get(array $params): Response
     {
-        $oidcEnabled = (bool) $this->config->oidcEnable;
-        $ldapEnabled = $this->config->useLdap === true && extension_loaded('ldap');
-
-        // Mobile auth is an AdvancedAuth capability — the mobile connection points
-        // (getToken, and the OIDC mint bridge) require the plugin. Only advertise
-        // mobile OIDC when AdvancedAuth is installed, so a core-only instance never
-        // offers a login the mint endpoint (Oidc\Controllers\Mobile) would refuse.
-        // NOTE: Cloud is assumed to ship AdvancedAuth, so this predicate covers it;
-        // confirm before release.
-        $mobileGate = $this->plugins->isEnabled('AdvancedAuth');
-
-        // password is always available; ldap/oidc only when configured.
-        $authMethods = ['password'];
-        if ($ldapEnabled) {
-            $authMethods[] = 'ldap';
-        }
-        if ($oidcEnabled && $mobileGate) {
-            $authMethods[] = 'oidc';
-        }
-
+        /** @var array<string, mixed> $payload */
         $payload = [
-            'mobileAuthEnabled' => $mobileGate,
-            'instanceName' => (string) ($this->config->sitename ?: 'Leantime'),
-            'version' => $this->appSettings->appVersion,
+            'mobileAuthEnabled' => false,
+            'instanceName' => (string) ($this->config->sitename ?: 'Julianna'),
+            'version' => (string) ($this->config->version ?: $this->appSettings->appVersion),
             'minAppVersion' => null,
-            'authMethods' => $authMethods,
+            'authMethods' => ['password'],
+            'mfaRequired' => true,
             'ssoProviders' => [],
         ];
-
-        if ($oidcEnabled && $mobileGate) {
-            // Generic-OIDC login initiation URL — advertised for mobile only when
-            // AdvancedAuth is installed. The app opens this in the system auth
-            // browser; the mobile branch is triggered by its own query params
-            // (see Oidc\Controllers\Login).
-            $payload['oidcLoginUrl'] = $this->request->getSchemeAndHttpHost().'/oidc/login';
-        }
-
-        // AdvancedAuth (or other plugins) can append named SSO providers to the
-        // PUBLIC-safe payload (labels + login URLs only) via this filter, without
-        // core knowing about them. Filter handlers MUST preserve the public-safe
-        // contract — never add secrets, plugin inventory, or versions here.
-        $payload = self::dispatchFilter('publicStatus', $payload, ['request' => $this->request]);
 
         // Defense in depth: this endpoint is unauthenticated, so strip any
         // known-sensitive keys a misbehaving filter (or a future edit) might have

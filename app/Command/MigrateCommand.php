@@ -19,7 +19,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  */
 #[AsCommand(
     name: 'db:migrate',
-    description: 'Runs and pending Leantime Database Migrations',
+    description: 'Runs pending Julianna database migrations',
 )]
 class MigrateCommand extends Command
 {
@@ -55,13 +55,13 @@ class MigrateCommand extends Command
         try {
             if (! $install->checkIfInstalled()) {
                 if ($silent) {
-                    $adminEmail = 'admin@leantime.io';
+                    $adminEmail = 'admin@julianna.invalid';
                     $setupConfig = [
-                        'email' => 'admin@leantime.io',
+                        'email' => 'admin@julianna.invalid',
                         'password' => '',
                         'firstname' => '',
                         'lastname' => '',
-                        'company' => 'Leantime',
+                        'company' => 'Julianna',
                     ];
                 } else {
                     $email = $input->getOption('email');

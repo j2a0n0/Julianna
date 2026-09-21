@@ -14,7 +14,7 @@ class DefaultConfig
      * @var string Name of your site, can be changed later
      */
     #[LaravelConfig('app.name')]
-    public string $sitename = 'Leantime';
+    public string $sitename = 'Julianna';
 
     /**
      * @var string Default language
@@ -30,7 +30,7 @@ class DefaultConfig
     /**
      * @var string Default logo URL use for printing (must be jpg or png format)
      */
-    public string $printLogoURL = '/dist/images/logo.jpg';
+    public string $printLogoURL = '/dist/images/logo.png';
 
     /**
      * @var string Base URL, trailing slash not needed
@@ -39,15 +39,27 @@ class DefaultConfig
     public string $appUrl = '';
 
     /**
-     * @var string Base of application withotu trailing slash (used for cookies), e.g, /leantime
+     * @var string Base of application without trailing slash (used for cookies), e.g. /julianna
      */
     public string $appDir = '';
 
     /**
-     * @var bool Send anonymous data <a href='https://docs.leantime.io/#/using-leantime/company-settings?id=telemetry' target='_blank'>More Info</a>.
-     *           No personally identifiable data will be sent and it will be impossible for us to track individual users.
+     * @var string Public URL for the exact source revision corresponding to this deployment
      */
-    public bool $allowTelemetry = true;
+    #[LaravelConfig('app.source_url')]
+    public string $sourceUrl = '';
+
+    /**
+     * @var string Public application version
+     */
+    #[LaravelConfig('app.version')]
+    public string $version = '1.0.0-dev';
+
+    /**
+     * @var string Source-control revision included in the running build
+     */
+    #[LaravelConfig('app.commit')]
+    public string $commit = 'unknown';
 
     /**
      * @var string Default theme
@@ -68,7 +80,7 @@ class DefaultConfig
      * @var string Default timezone
      */
     #[LaravelConfig('app.timezone')]
-    public string $defaultTimezone = 'America/Los_Angeles';
+    public string $defaultTimezone = 'Europe/Zurich';
 
     /**
      * @var bool Enable to specifiy menu on a project by project basis
@@ -116,6 +128,12 @@ class DefaultConfig
      * @var bool Don't show user/pass form on login?
      */
     public bool $disableLoginForm = false;
+
+    /**
+     * @var bool Whether public account registration is enabled
+     */
+    #[LaravelConfig('auth.registration_enabled')]
+    public bool $registrationEnabled = true;
 
     // Database ====================================================================================
     /**
@@ -199,10 +217,10 @@ class DefaultConfig
 
     // Sessions ====================================================================================
     /**
-     * @var string Salting sessions. Replace with a strong password
+     * @var string Application encryption key. Use at least 32 random bytes.
      */
     #[LaravelConfig('app.key')]
-    public string $sessionPassword = '3evBlq9zdUEuzKvVJHWWx3QzsQhturBApxwcws2m';
+    public string $sessionPassword = '';
 
     /**
      * @var int How many minutes after inactivity should we logout?  480min = 8hours
@@ -213,7 +231,7 @@ class DefaultConfig
      * @var bool. Sets whether the cookie should only be served via https
      */
     #[LaravelConfig('session.secure')]
-    public bool $sessionSecure = false;
+    public bool $sessionSecure = true;
 
     // Email =======================================================================================
     /**
@@ -366,10 +384,10 @@ class DefaultConfig
             "ldapRole":"administrators"
           }
         }';
-    // Default Leantime Role on creation. (set to editor)
+    // Default application role on creation (editor).
 
     /**
-     * @var int Default Leantime Role on creation. (set to editor)
+     * @var int Default application role on creation (editor).
      */
     public int $ldapDefaultRoleKey = 20;
 
@@ -379,11 +397,7 @@ class DefaultConfig
      */
     public string $plugins = '';
 
-    /**
-     * @var string The Url of the Marketplace
-     **/
-    public string $marketplaceUrl = 'https://marketplace.leantime.io/';
-
+    // Remote plugin marketplaces are intentionally unavailable.
     // OIDC Settings ================================================================================
     /**
      * @var bool Set to true if you want to use OIDC
@@ -565,7 +579,7 @@ class DefaultConfig
     public int $ratelimitMcp = 300;
 
     /**
-     * @var int rate limit on signup + user-invite POSTs (per IP per minute). These endpoints
+     * @var int rate limit on signup POSTs (per IP per hour). This endpoint
      *          send email and provision resources, so they get a tight budget (invite-spam abuse).
      */
     public int $ratelimitSignup = 5;

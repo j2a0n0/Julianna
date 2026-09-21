@@ -13,6 +13,7 @@
 <div class="regcontent">
     @dispatchEvent('afterRegcontentOpen')
     <form id="resetPassword" action="" method="post">
+        @csrf
         @dispatchEvent('afterFormOpen')
 
         {!! $tpl->displayInlineNotification() !!}
@@ -26,7 +27,7 @@
         <div class=" ">
             <x-global::forms.text-input type="password" autocomplete="off" name="password2" id="password2" placeholder="{{ __('input.placeholders.confirm_password') }}" />
         </div>
-        <small>{!! __('label.passwordRequirements') !!}</small><br /><br />
+        <small>{{ __('text.julianna_password_requirements') }}</small><br /><br />
         <div class="">
 
             @dispatchEvent('beforeSubmitButton')

@@ -205,7 +205,7 @@
                 </div>
 
                     <div id="apiKeys">
-                        <x-global::forms.button tag="a" link="#/api/newApiKey" contentRole="primary">Generate API Key</x-global::forms.button>
+                        <x-global::forms.button tag="a" link="#/api/newApiKey" contentRole="primary">{{ __('buttons.generate_api_key') }}</x-global::forms.button>
                         <br /> <br />
                         <ul class="sortableTicketList">
 
@@ -224,7 +224,7 @@
                                         </ul>
                                     </div>
                                     <a href="#/api/apiKey/{{ $apiKey['id'] }}"><strong>{{ $apiKey['firstname'] }}</strong></a><br />
-                                    lt_{{ $apiKey['username'] }}***
+                                    jul_{{ $apiKey['username'] }}***
                                     | {!! __('labels.created_on') !!}: {{ format($apiKey['createdOn'])->date() }} | {!! __('labels.last_used') !!}: {{ format($apiKey['lastlogin'])->date() }}
 
                                 </div>

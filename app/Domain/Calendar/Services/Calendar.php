@@ -410,7 +410,7 @@ class Calendar extends BaseService
                 $description = str_replace("\r\n", '\\n', strip_tags($event['description']));
 
                 $currentEvent = IcalEvent::create()
-                    ->image(BASE_URL.'/dist/images/favicon.png', 'image/png', Display::badge())
+                    ->image(BASE_URL.'/dist/images/favicon.svg', 'image/svg+xml', Display::badge())
                     ->startsAt(dtHelper()->parseDbDateTime($event['dateFrom'])->setToUserTimezone())
                     ->endsAt(dtHelper()->parseDbDateTime($event['dateTo'])->setToUserTimezone())
                     ->name($event['title'])
@@ -873,7 +873,7 @@ class Calendar extends BaseService
                 'allow_redirects' => OutboundUrlGuard::redirectOptions(),
                 'headers' => [
                     'Accept' => 'text/calendar',
-                    'User-Agent' => 'Leantime Calendar Integration v'.$this->config->appVersion,
+                    'User-Agent' => 'Julianna Calendar Integration v'.$this->config->appVersion,
                 ],
             ]);
 

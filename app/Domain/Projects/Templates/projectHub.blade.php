@@ -77,7 +77,7 @@
 
             <x-global::accordion id="myProjectsHub-favorites" class="noBackground">
                 <x-slot name="title">
-                    ⭐ My Favorites
+                    {{ __('text.my_favorites') }}
                 </x-slot>
                 <x-slot name="content">
                     <div class="row">
@@ -126,4 +126,3 @@
         </div>
     </div>
 @endsection
-

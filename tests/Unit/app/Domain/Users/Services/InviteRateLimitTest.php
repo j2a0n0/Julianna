@@ -9,6 +9,8 @@ use Leantime\Core\UI\Theme as ThemeCore;
 use Leantime\Domain\Auth\Services\Auth as AuthService;
 use Leantime\Domain\Clients\Repositories\Clients as ClientRepository;
 use Leantime\Domain\Files\Services\Files;
+use Leantime\Domain\JuliannaAuth\Repositories\AccountRepository;
+use Leantime\Domain\JuliannaAuth\Services\JuliannaAuth;
 use Leantime\Domain\Projects\Repositories\Projects as ProjectRepository;
 use Leantime\Domain\Projects\Services\Projects as ProjectService;
 use Leantime\Domain\Setting\Services\Setting as SettingService;
@@ -70,6 +72,8 @@ class InviteRateLimitTest extends TestCase
             $this->createMock(SettingService::class),
             $this->createMock(ThemeCore::class),
             $this->createMock(ProjectService::class),
+            $this->createMock(AccountRepository::class),
+            $this->createMock(JuliannaAuth::class),
         );
 
         $result = $service->createUserInvite([

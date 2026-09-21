@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Support\Page\Acceptance;
 
 use Codeception\Util\Fixtures;
+use RobThree\Auth\TwoFactorAuth;
 
 class Login
 {
@@ -12,6 +13,8 @@ class Login
      * @var \Tests\Support\AcceptanceTester;
      */
     protected $I;
+
+    protected Install $installPage;
 
     public function __construct(\Tests\Support\AcceptanceTester $I, Install $installPage)
     {
@@ -21,14 +24,21 @@ class Login
 
     public function login($username, $password)
     {
-        if ($this->loadSessionShapshot('leantime_session')) {
-            return;
+        if ($this->loadSessionShapshot('julianna_session')) {
+            $this->I->amOnPage('/dashboard/home');
+            if (! str_contains($this->I->grabFromCurrentUrl(), '/auth/login')) {
+                return;
+            }
+
+            // The server-side registry may have revoked a cached cookie after
+            // logout, password reset, or administrative disablement.
+            Fixtures::cleanup('julianna_session');
         }
 
         if (! Fixtures::exists('installed')) {
             $this->installPage->install(
-                'test@leantime.io',
-                'Test123456!',
+                'owner@julianna.test',
+                'JuliannaTest123!',
                 'John',
                 'Smith',
                 'Smith & Co'
@@ -36,13 +46,19 @@ class Login
         }
 
         $this->I->amOnPage('/auth/login');
+        $this->I->waitForElementVisible('#login', 30);
         $this->I->fillField(['name' => 'username'], $username);
         $this->I->fillField(['name' => 'password'], $password);
         $this->I->click('Login');
+
+        $this->I->waitForElementVisible('#code', 90);
+        $secret = (string) Fixtures::get('owner_totp_secret');
+        $this->I->fillField('#code', (new TwoFactorAuth('Julianna', 6, 30, 'sha1'))->getCode($secret));
+        $this->I->click('input[type="submit"]');
         $this->I->waitForElementVisible('.welcome-widget', 120);
         $this->I->see('Hi John');
 
-        $this->saveSessionSnapshot('leantime_session');
+        $this->saveSessionSnapshot('julianna_session');
     }
 
     protected function loadSessionShapshot(string $name): bool

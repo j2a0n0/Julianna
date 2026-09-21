@@ -4,7 +4,7 @@
 
     <x-auth::onboardingProgress :percentComplete="100" current="" :completed="['account', 'theme', 'personalization', 'time']" />
 
-<h2>🎉 Your Leantime journey is about to begin</h2>
+<h2>🎉 Your Julianna journey is about to begin</h2>
 
 <div class="regcontent">
 

@@ -31,7 +31,7 @@ class RedisServiceProvider extends ServiceProvider
             $installationConfig['prefix'] = 'leantime_cache:installation:';
 
             $sessionsConfig = $app['config']['redis']['default'];
-            $sessionsConfig['prefix'] = 'leantime_sessions:';
+            $sessionsConfig['prefix'] = 'julianna_sessions:';
 
             // Prepare available redis connections
             // These connections (cache, installation, sessions) can be used for sessions and cache
@@ -66,7 +66,7 @@ class RedisServiceProvider extends ServiceProvider
                 // user out (e.g. whenever `cache:clear` ran against production). Redis Cluster
                 // does not support SELECT, so isolation only applies to non-cluster setups.
                 $cacheDb = (int) ($cacheConfig['database'] ?? 0);
-                $sessionsConfig['database'] = (int) env('LEAN_REDIS_SESSION_DB', $cacheDb === 0 ? 1 : 0);
+                $sessionsConfig['database'] = (int) env('JULIANNA_REDIS_SESSION_DB', $cacheDb === 0 ? 1 : 0);
 
                 $app['config']->set('redis.cache', $cacheConfig);
                 $app['config']->set('redis.installation', $installationConfig);

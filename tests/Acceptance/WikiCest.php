@@ -17,7 +17,7 @@ class WikiCest
 {
     public function _before(AcceptanceTester $I, Login $loginPage): void
     {
-        $loginPage->login('test@leantime.io', 'Test123456!');
+        $loginPage->login('owner@julianna.test', 'JuliannaTest123!');
     }
 
     #[Group('wiki')]

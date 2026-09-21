@@ -34,7 +34,7 @@ class Ical extends Controller
 
             return new Response($calendar->get(), 200, [
                 'Content-Type' => 'text/calendar; charset=utf-8',
-                'Content-Disposition' => 'attachment; filename="leantime-calendar.ics"',
+                'Content-Disposition' => 'attachment; filename="julianna-calendar.ics"',
             ]);
         } catch (\Exception $e) {
             return Frontcontroller::redirect(BASE_URL.'/errors/404');

@@ -12,12 +12,13 @@ use Leantime\Core\Configuration\Environment as EnvironmentCore;
 use Leantime\Core\Controller\Frontcontroller as FrontcontrollerCore;
 use Leantime\Core\Events\DispatchesEvents;
 use Leantime\Core\Language as LanguageCore;
-use Leantime\Core\Mailer as MailerCore;
 use Leantime\Core\UI\Theme;
 use Leantime\Domain\Auth\Models\Roles;
 use Leantime\Domain\Auth\Repositories\AccessTokenRepository;
 use Leantime\Domain\Auth\Repositories\Auth as AuthRepository;
-use Leantime\Domain\Ldap\Services\Ldap;
+use Leantime\Domain\Auth\Support\SecureAuthRequest;
+use Leantime\Domain\JuliannaAuth\Enums\AccountState;
+use Leantime\Domain\JuliannaAuth\Repositories\AccountRepository;
 use Leantime\Domain\Setting\Repositories\Setting as SettingRepository;
 use Leantime\Domain\Users\Repositories\Users as UserRepository;
 use Ramsey\Uuid\Uuid;
@@ -143,106 +144,9 @@ class Auth implements Authenticatable
      */
     public function login(string $username, string $password): bool
     {
-        self::dispatch_event('beforeLoginCheck', ['username' => $username, 'password' => $password]);
-
-        // different identity providers can live here
-        // they all need to
-        // // A: ensure the user is in leantime (with a valid role) and if not create the user
-        // // B: set the session variables
-        // // C: update users from the identity provider,
-        // Try Ldap
-        if ($this->config->useLdap === true && extension_loaded('ldap')) {
-            $ldap = app()->make(Ldap::class);
-
-            if ($ldap->connect() && $ldap->bind($username, $password)) {
-                // Update username to include domain
-                $usernameWDomain = $ldap->getEmail($username);
-                // Get user
-                $user = $this->userRepo->getUserByEmail($usernameWDomain);
-
-                $ldapUser = $ldap->getSingleUser($username);
-
-                if ($ldapUser === false) {
-                    return false;
-                }
-
-                // If user does not exist create user
-                if (! $user) {
-                    $userArray = [
-                        'firstname' => $ldapUser['firstname'],
-                        'lastname' => $ldapUser['lastname'],
-                        'phone' => $ldapUser['phone'],
-                        'user' => $ldapUser['user'],
-                        'role' => $ldapUser['role'],
-                        'department' => $ldapUser['department'],
-                        'jobTitle' => $ldapUser['jobTitle'],
-                        'jobLevel' => $ldapUser['jobLevel'],
-                        'password' => '',
-                        'clientId' => '',
-                        'source' => 'ldap',
-                        'status' => 'a',
-                    ];
-
-                    $userId = $this->userRepo->addUser($userArray);
-
-                    if ($userId !== false) {
-                        $user = $this->userRepo->getUserByEmail($usernameWDomain);
-                    } else {
-
-                        Log::error('Ldap user creation failed.');
-
-                        return false;
-                    }
-
-                    // @TODO: create a better login response. This will return that the username or password was not correct
-                } else {
-                    $user['firstname'] = $ldapUser['firstname'];
-                    $user['lastname'] = $ldapUser['lastname'];
-                    $user['phone'] = $ldapUser['phone'];
-                    $user['user'] = $user['username'];
-                    $user['department'] = $ldapUser['department'];
-                    $user['jobTitle'] = $ldapUser['jobTitle'];
-                    $user['jobLevel'] = $ldapUser['jobLevel'];
-
-                    $this->userRepo->editUser($user, $user['id']);
-                }
-
-                if ($user !== false && is_array($user)) {
-                    $this->setUserSession($user, true);
-
-                    return true;
-                } else {
-
-                    Log::info('Could not retrieve user by email');
-
-                    return false;
-                }
-            }
-
-            // Don't return false, to allow the standard login provider to check the db for contractors or clients not
-            // in ldap
-        } elseif ($this->config->useLdap === true && ! extension_loaded('ldap')) {
-            Log::error("Can't use ldap. Extension not installed");
-        }
-
-        // TODO: Single Sign On?
-        // Standard login
-        // Check if the user is in our db
-        // Check even if ldap is turned on to allow contractors and clients to have an account
-        $user = $this->authRepo->getUserByLogin($username, $password);
-
-        if ($user !== false && is_array($user)) {
-            $this->setUserSession($user);
-
-            self::dispatch_event('afterLoginCheck', ['username' => $username, 'password' => $password, 'authService' => app()->make(self::class)]);
-
-            return true;
-        } else {
-            $this->logFailedLogin($username);
-            self::dispatch_event('afterLoginCheck', ['username' => $username, 'password' => $password, 'authService' => app()->make(self::class)]);
-
-            return false;
-        }
+        // Credentials live exclusively in julianna_auth_accounts. Web login
+        // must pass through the dedicated password and MFA controllers.
+        return false;
     }
 
     /**
@@ -250,8 +154,8 @@ class Auth implements Authenticatable
      */
     public function createToken(string $name, array $abilities = ['*']): array
     {
-        if (! $this->loggedIn()) {
-            throw new \Exception('User must be authenticated to create token');
+        if (! SecureAuthRequest::hasFullWebAuthentication()) {
+            throw new \Exception('A fully authenticated Julianna browser session is required to create a token.');
         }
 
         return $this->tokenRepo->createToken($this->getUserId(), $name, $abilities);
@@ -351,124 +255,37 @@ class Auth implements Authenticatable
 
     }
 
-    /**
-     * validateResetLink - validates that the password reset link belongs to a user account in the database
-     *
-     * @param  string  $hash  invite link hash
-     */
+    /** Legacy credential and invitation endpoints fail closed in Julianna. */
     public function validateResetLink(string $hash): bool
     {
-
-        return $this->authRepo->validateResetLink($hash);
+        return false;
     }
 
-    /**
-     * getUserByInviteLink - gets the user by invite link
-     *
-     * @param  string  $hash  invite link hash
-     */
-    public function getUserByInviteLink(string $hash): bool|array
+    public function getUserByInviteLink(string $hash): false
     {
-        return $this->authRepo->getUserByInviteLink($hash);
+        return false;
     }
 
-    /**
-     * generateLinkAndSendEmail - generates an invitation link (hash) and sends email to user
-     *
-     * @param  string  $username  new user to be invited (email)
-     * @return bool returns true on success, false on failure
-     *
-     * @throws BindingResolutionException
-     */
     public function generateLinkAndSendEmail(string $username): bool
     {
-
-        $userFromDB = $this->userRepo->getUserByEmail($username);
-
-        if ($userFromDB !== false && count($userFromDB) > 0) {
-            if ($userFromDB['pwResetCount'] < $this->pwResetLimit) {
-                $permitted_chars = '0123456789abcdefghijklmnopqrstuvwxyz';
-                $resetLink = substr(str_shuffle($permitted_chars), 0, 32);
-
-                $result = $this->authRepo->setPWResetLink($username, $resetLink);
-
-                if ($result) {
-                    // Don't queue, send right away
-                    $mailer = app()->make(MailerCore::class);
-                    $mailer->setContext('password_reset');
-                    $mailer->setSubject($this->language->__('email_notifications.password_reset_subject'));
-                    $actual_link = ''.BASE_URL.'/auth/resetPw/'.$resetLink;
-                    $mailer->setHtml(sprintf($this->language->__('email_notifications.password_reset_message'), $actual_link));
-                    $to = [$username];
-                    $mailer->sendMail($to, 'Leantime System');
-
-                    return true;
-                }
-            } elseif ($this->config->debug) {
-
-                Log::warning('PW reset failed: maximum request count has been reached for user '.$userFromDB['id']);
-            }
-        }
-
         return false;
     }
 
     public function changePw(string $password, string $hash): bool
     {
-        return $this->authRepo->changePW($password, $hash);
+        return false;
     }
 
-    /**
-     * checkPasswordStrength - validates that a password meets the minimum strength requirements.
-     *
-     * Password must be at least 8 characters and include an upper case letter,
-     * a lower case letter, a number and a special character.
-     *
-     * @param  string  $password  the password to validate
-     * @return bool returns true if the password is strong enough, false otherwise
-     */
     public function checkPasswordStrength(string $password): bool
     {
-        $uppercase = preg_match('@[A-Z]@', $password);
-        $lowercase = preg_match('@[a-z]@', $password);
-        $number = preg_match('@[0-9]@', $password);
-        $specialChars = preg_match('@[^\w]@', $password);
-
-        if (! $uppercase || ! $lowercase || ! $number || ! $specialChars || strlen($password) < 8) {
-            return false;
-        }
-
-        return true;
+        return mb_strlen($password, '8bit') >= 12 && mb_strlen($password, '8bit') <= 128;
     }
 
     /**
-     * resetPassword - validates and applies a password reset for a given reset link.
-     *
-     * Performs the password match check, strength check and persists the new
-     * password. Returns a status string the caller can map to a notification:
-     * 'success', 'mismatch', 'weak' or 'error'.
-     *
-     * @param  string  $password  the new password
-     * @param  string  $passwordConfirm  the password confirmation
-     * @param  string  $hash  the password reset link hash
-     * @return string one of 'success', 'mismatch', 'weak', 'error'
-     *
      * @api
      */
     public function resetPassword(string $password, string $passwordConfirm, string $hash): string
     {
-        if (strlen($password) === 0 || $password !== $passwordConfirm) {
-            return 'mismatch';
-        }
-
-        if (! $this->checkPasswordStrength($password)) {
-            return 'weak';
-        }
-
-        if ($this->changePw($password, $hash)) {
-            return 'success';
-        }
-
         return 'error';
     }
 
@@ -496,7 +313,7 @@ class Auth implements Authenticatable
             $url = trim(preg_replace('/[\x00-\x1F\x7F]/', '', $url));
 
             // Strip the application base URL when present so that same-origin
-            // absolute URLs (e.g. https://my-leantime.com/dashboard/home) are
+            // absolute URLs (e.g. https://julianna.example/dashboard/home) are
             // treated the same as their relative counterparts.
             //
             // Match only on a real boundary: a bare str_starts_with() would also fire on
@@ -548,6 +365,28 @@ class Auth implements Authenticatable
     }
 
     /**
+     * Resolve the post-MFA destination for the now-authenticated user.
+     *
+     * The global dashboard is manager-only. Public signups may legitimately
+     * be approved as read-only, commenter, or editor users, so sending those
+     * accounts to the default dashboard would turn a successful first login
+     * into a 403. Explicit non-dashboard destinations remain untouched.
+     */
+    public function resolveAuthenticatedRedirect(?string $redirect): string
+    {
+        $resolved = $this->resolveSafeRedirect($redirect);
+        $role = session('userdata.role');
+
+        if ($resolved === BASE_URL.'/dashboard/home'
+            && in_array($role, [Roles::$readonly, Roles::$commenter, Roles::$editor], true)
+        ) {
+            return BASE_URL.'/users/editOwn';
+        }
+
+        return $resolved;
+    }
+
+    /**
      * shouldHideLoginForm - determines whether the default login form should be hidden,
      * combining the admin setting with the configured disableLoginForm flag.
      *
@@ -576,10 +415,6 @@ class Auth implements Authenticatable
      */
     public function getLoginInputPlaceholder(): string
     {
-        if ($this->config->useLdap) {
-            return 'input.placeholders.enter_email_or_username';
-        }
-
         return 'input.placeholders.enter_email';
     }
 
@@ -662,7 +497,7 @@ class Auth implements Authenticatable
 
     public function verify2FA(string $code): bool
     {
-        $twoFactorAuthentication = new TwoFactorAuth('Leantime');
+        $twoFactorAuthentication = new TwoFactorAuth('Julianna');
 
         return $twoFactorAuthentication->verifyCode(session('userdata.twoFASecret'), $code);
     }
@@ -675,18 +510,6 @@ class Auth implements Authenticatable
     public function set2FAVerified(): void
     {
         session(['userdata.twoFAVerified' => true]);
-    }
-
-    private function logFailedLogin(string $user): void
-    {
-        $user = $user == '' ? 'unknown' : $user;
-        $date = new \DateTime;
-        $date = $date->format('y:m:d h:i:s');
-
-        $ip = $_SERVER['REMOTE_ADDR'];
-        $msg = '['.$date.']['.$ip.'] Login failed for user: '.$user;
-
-        Log::info($msg);
     }
 
     public function getAuthIdentifierName()
@@ -760,7 +583,12 @@ class Auth implements Authenticatable
 
         // Load the user associated with this token
         $user = $this->userRepo->getUser($tokenModel['tokenable_id']);
-        if (! $user) {
+        if (! $user || strtolower((string) ($user['status'] ?? '')) !== 'a') {
+            return false;
+        }
+
+        $account = app(AccountRepository::class)->findByUserId((int) $user['id']);
+        if ($account !== null && $account->state !== AccountState::ACTIVE) {
             return false;
         }
 

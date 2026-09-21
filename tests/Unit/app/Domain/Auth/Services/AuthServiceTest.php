@@ -51,6 +51,36 @@ class AuthServiceTest extends TestCase
         $this->assertSame(BASE_URL.'/dashboard/home', $service->resolveSafeRedirect('/'));
     }
 
+    public function test_authenticated_redirect_uses_profile_when_default_dashboard_is_not_available_to_role(): void
+    {
+        $service = $this->makeService();
+
+        foreach (['readonly', 'commenter', 'editor'] as $role) {
+            session(['userdata.role' => $role]);
+            $this->assertSame(
+                BASE_URL.'/users/editOwn',
+                $service->resolveAuthenticatedRedirect(BASE_URL.'/dashboard/home'),
+            );
+        }
+    }
+
+    public function test_authenticated_redirect_keeps_dashboard_for_manager_and_explicit_internal_paths_for_members(): void
+    {
+        $service = $this->makeService();
+
+        session(['userdata.role' => 'manager']);
+        $this->assertSame(
+            BASE_URL.'/dashboard/home',
+            $service->resolveAuthenticatedRedirect(BASE_URL.'/dashboard/home'),
+        );
+
+        session(['userdata.role' => 'readonly']);
+        $this->assertSame(
+            BASE_URL.'/tickets/showAll',
+            $service->resolveAuthenticatedRedirect(BASE_URL.'/tickets/showAll'),
+        );
+    }
+
     public function test_resolve_safe_redirect_allows_internal_path(): void
     {
         $service = $this->makeService();
@@ -229,46 +259,23 @@ class AuthServiceTest extends TestCase
         );
     }
 
-    public function test_check_password_strength_rejects_weak_and_accepts_strong(): void
+    public function test_compatibility_password_check_uses_length_only_policy(): void
     {
         $service = $this->makeService();
 
-        $this->assertFalse($service->checkPasswordStrength('weak'));
-        $this->assertFalse($service->checkPasswordStrength('alllowercase1!'));
-        $this->assertFalse($service->checkPasswordStrength('NoNumber!!'));
-        $this->assertFalse($service->checkPasswordStrength('NoSpecial123'));
-        $this->assertFalse($service->checkPasswordStrength('Aa1!aaa')); // 7 chars
-        $this->assertTrue($service->checkPasswordStrength('StrongPass1!'));
+        $this->assertFalse($service->checkPasswordStrength(str_repeat('a', 11)));
+        $this->assertTrue($service->checkPasswordStrength(str_repeat('a', 12)));
+        $this->assertTrue($service->checkPasswordStrength('spaces are okay'));
+        $this->assertTrue($service->checkPasswordStrength(str_repeat('z', 128)));
+        $this->assertFalse($service->checkPasswordStrength(str_repeat('z', 129)));
     }
 
-    public function test_reset_password_reports_mismatch(): void
+    public function test_legacy_password_reset_always_fails_closed(): void
     {
         $service = $this->makeService();
 
-        $this->assertSame('mismatch', $service->resetPassword('', '', 'hash'));
-        $this->assertSame('mismatch', $service->resetPassword('StrongPass1!', 'Different1!', 'hash'));
-    }
-
-    public function test_reset_password_reports_weak(): void
-    {
-        $service = $this->makeService();
-
-        $this->assertSame('weak', $service->resetPassword('weak', 'weak', 'hash'));
-    }
-
-    public function test_reset_password_success_and_error_map_to_repository(): void
-    {
-        $successRepo = $this->make(AuthRepository::class, [
-            'changePW' => fn () => true,
-        ]);
-        $this->assertSame('success', $this->makeService(null, null, $successRepo)
-            ->resetPassword('StrongPass1!', 'StrongPass1!', 'hash'));
-
-        $failRepo = $this->make(AuthRepository::class, [
-            'changePW' => fn () => false,
-        ]);
-        $this->assertSame('error', $this->makeService(null, null, $failRepo)
-            ->resetPassword('StrongPass1!', 'StrongPass1!', 'hash'));
+        $this->assertSame('error', $service->resetPassword('', '', 'hash'));
+        $this->assertSame('error', $service->resetPassword('ValidPassword', 'ValidPassword', 'hash'));
     }
 
     public function test_should_hide_login_form_when_setting_on(): void
@@ -297,12 +304,12 @@ class AuthServiceTest extends TestCase
         $this->assertFalse($this->makeService($config2, $settingsRepo)->shouldHideLoginForm());
     }
 
-    public function test_login_input_placeholder_depends_on_ldap(): void
+    public function test_login_input_is_always_email_even_if_legacy_ldap_is_configured(): void
     {
         $ldapConfig = new EnvironmentCore;
         $ldapConfig->set('useLdap', true);
         $this->assertSame(
-            'input.placeholders.enter_email_or_username',
+            'input.placeholders.enter_email',
             $this->makeService($ldapConfig)->getLoginInputPlaceholder()
         );
 

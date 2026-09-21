@@ -34,7 +34,7 @@ class McpCest
     public function _before(AcceptanceTester $I, Install $installPage)
     {
         // Fresh install — same fixture as ApiCest/BearerApiCest.
-        $installPage->install('test@leantime.io', 'Test123456!', 'John', 'Smith', 'Smith & Co');
+        $installPage->install('owner@julianna.test', 'JuliannaTest123!', 'John', 'Smith', 'Smith & Co');
     }
 
     #[Group('mcp')]
@@ -164,7 +164,7 @@ class McpCest
             'version' => '1.0.0',
             'installdate' => date('Y-m-d H:i:s'),
             'foldername' => 'McpServer',
-            'homepage' => 'https://leantime.io',
+            'homepage' => 'https://julianna.example',
             'authors' => '[]',
             'license' => '',
             'format' => 'folder',
@@ -177,7 +177,7 @@ class McpCest
      */
     private function mintBearerToken(AcceptanceTester $I): void
     {
-        $userId = $I->grabFromDatabase('zp_user', 'id', ['username' => 'test@leantime.io']);
+        $userId = $I->grabFromDatabase('zp_user', 'id', ['username' => 'owner@julianna.test']);
         Assert::assertNotEmpty($userId, 'Test user not found after install');
 
         $token = bin2hex(random_bytes(20));

@@ -1,0 +1,15 @@
+#!/usr/bin/env php
+<?php
+
+use Leantime\Core\Console\ConsoleKernel;
+use Symfony\Component\Console\Input\ArgvInput;
+
+define('JULIANNA_CLI', true);
+define('ARTISAN_BINARY', 'bin/julianna');
+
+require __DIR__.'/../vendor/autoload.php';
+
+$app = require_once __DIR__.'/../bootstrap/app.php';
+$status = $app->handleCommand(new ArgvInput);
+
+exit($status);

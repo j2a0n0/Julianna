@@ -2,8 +2,10 @@
 
 namespace Leantime\Domain\Help\Services;
 
+use Leantime\Core\Auth\Permissions\PermissionService;
 use Leantime\Core\Events\DispatchesEvents;
 use Leantime\Domain\Setting\Repositories\Setting;
+use Leantime\Domain\Tickets\Permissions\TicketsPermissions;
 
 class Helper
 {
@@ -115,8 +117,10 @@ class Helper
      *
      * @return void
      */
-    public function __construct(private Setting $settingsRepo)
-    {
+    public function __construct(
+        private Setting $settingsRepo,
+        private PermissionService $permissions,
+    ) {
 
         $this->availableModals = self::dispatch_filter('addHelperModal', $this->availableModals);
     }
@@ -341,9 +345,22 @@ class Helper
     public function ensureDefaultProject(int $userId, string $role = 'editor'): void
     {
         $currentProject = session('currentProject');
-        if ($currentProject === null || $currentProject === 0 || $currentProject === '' || $currentProject === false) {
-            $this->createDefaultProject($userId, $role);
+        if ($currentProject !== null && $currentProject !== 0 && $currentProject !== '' && $currentProject !== false) {
+            return;
         }
+
+        // A verified signup may intentionally be approved without a project
+        // assignment and with a read-only/commenter role. The default project
+        // seed includes tasks and milestones, so attempting it for an account
+        // without tickets.create turns a successful first login into a 403.
+        // Do not elevate the project role behind the administrator's back;
+        // leave the user unassigned until an administrator assigns a project
+        // (or grants a role that can create its own onboarding work).
+        if (! $this->permissions->currentUserCan(TicketsPermissions::CREATE)) {
+            return;
+        }
+
+        $this->createDefaultProject($userId, $role);
     }
 
     /**
@@ -419,7 +436,7 @@ class Helper
 
         $values = [
             'name' => 'My Project',
-            'details' => 'Welcome to your first project in Leantime!<br />This is your space to organize tasks, track goals, and plan your work. Feel free to modify anything here or create additional projects as you grow. This project is just for you to get started',
+            'details' => 'Welcome to your first project in Julianna!<br />This is your space to organize tasks, track goals, and plan your work. Feel free to modify anything here or create additional projects as you grow. This project is just for you to get started',
             'clientId' => 0,
             'hourBudget' => 0,
             'assignedUsers' => [['id' => $userId, 'projectRole' => '']],
@@ -457,21 +474,21 @@ class Helper
             'milestone' => $milestoneId,
         ];
 
-        $values['headline'] = '💬 Join our community chat';
-        $values['description'] = 'Our community chat is a great resource to ask questions and get feedback on project set up. <a href="https://discord.gg/4zMzJtAq9z" target="_blank">Community Chat</a>';
+        $values['headline'] = '💬 Meet your Julianna team';
+        $values['description'] = 'Use this task to agree on how your team will ask questions, share feedback, and organise project work.';
         $values['dateToFinish'] = dtHelper()->userNow()->addDays(1)->formatDateForUser();
         $ticketService->quickAddTicket($values);
 
         if (in_array($role, ['admin', 'owner', 'manager'])) {
 
             $values['headline'] = '👥 Invite your team mates';
-            $values['description'] = 'Whether you are working with someone or just need an accountability buddy. Using Leantime as a group helps to stay on track and motivated <a href="'.BASE_URL.'/users/showAll">User Management</a>';
+            $values['description'] = 'Review verified signup requests, assign roles, and connect colleagues to the right projects. <a href="'.BASE_URL.'/users/approvals">Signup approvals</a>';
             $values['dateToFinish'] = dtHelper()->userNow()->addDays(1)->formatDateForUser();
             $ticketService->quickAddTicket($values);
         }
 
-        $values['headline'] = '🎯 Learn More about Leantime\'s Project Structure';
-        $values['description'] = 'We have a lot of additional resources on our help documentation. To learn more about project structure in Leantime and best practices visit: <a href="https://support.leantime.io/en/article/getting-started-in-leantime-an-introduction-to-setting-structure-to-the-work-14t1qip/" target="_blank">https://help.leantime.io</a>';
+        $values['headline'] = '🎯 Learn about Julianna project structure';
+        $values['description'] = 'Explore projects, milestones, goals, and tasks in this workspace. Product and source information is available on the <a href="'.BASE_URL.'/help/about">About page</a>.';
         $values['dateToFinish'] = dtHelper()->userNow()->addDays(1)->formatDateForUser();
         $ticketService->quickAddTicket($values);
 
@@ -490,7 +507,7 @@ class Helper
         $values['dateToFinish'] = dtHelper()->userNow()->addDays(1)->formatDateForUser();
         $ticketService->quickAddTicket($values);
 
-        $values['headline'] = '🖼️ Complete my Leantime profile';
+        $values['headline'] = '🖼️ Complete my Julianna profile';
         $values['description'] = 'Update profile picture and complete work preferences to personalize my experience. <a href="'.BASE_URL.'/users/editOwn/">My Profile</a>';
         $values['dateToFinish'] = dtHelper()->userNow()->addDays(1)->formatDateForUser();
         $ticketService->quickAddTicket($values);

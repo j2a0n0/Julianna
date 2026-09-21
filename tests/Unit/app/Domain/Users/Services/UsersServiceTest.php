@@ -10,6 +10,8 @@ use Leantime\Core\UI\Theme as ThemeCore;
 use Leantime\Domain\Auth\Services\Auth as AuthService;
 use Leantime\Domain\Clients\Repositories\Clients as ClientRepository;
 use Leantime\Domain\Files\Services\Files;
+use Leantime\Domain\JuliannaAuth\Repositories\AccountRepository;
+use Leantime\Domain\JuliannaAuth\Services\JuliannaAuth;
 use Leantime\Domain\Projects\Repositories\Projects as ProjectRepository;
 use Leantime\Domain\Projects\Services\Projects as ProjectService;
 use Leantime\Domain\Setting\Services\Setting as SettingService;
@@ -45,6 +47,10 @@ class UsersServiceTest extends TestCase
             $overrides['settingsService'] ?? $this->make(SettingService::class),
             $overrides['themeCore'] ?? $this->make(ThemeCore::class),
             $overrides['projectService'] ?? $this->make(ProjectService::class),
+            $overrides['accountRepository'] ?? $this->make(AccountRepository::class, [
+                'findByUserId' => fn () => null,
+            ]),
+            $overrides['juliannaAuth'] ?? $this->make(JuliannaAuth::class),
         );
     }
 
@@ -208,7 +214,7 @@ class UsersServiceTest extends TestCase
         $this->assertSame('user_exists', $result);
     }
 
-    public function test_change_own_password_rejects_wrong_current_password(): void
+    public function test_legacy_password_change_requires_the_julianna_reset_flow(): void
     {
         $repo = $this->make(UserRepository::class, [
             'getUser' => fn () => [
@@ -226,7 +232,7 @@ class UsersServiceTest extends TestCase
 
         $result = $service->changeOwnPassword(1, 'wrong', 'NewPass1!', 'NewPass1!');
 
-        $this->assertSame('previous_password_incorrect', $result);
+        $this->assertSame('password_reset_required', $result);
     }
 
     public function test_change_own_password_rejects_mismatched_confirmation(): void
@@ -247,7 +253,7 @@ class UsersServiceTest extends TestCase
 
         $result = $service->changeOwnPassword(1, 'correct-horse', 'NewPass1!', 'Different1!');
 
-        $this->assertSame('passwords_dont_match', $result);
+        $this->assertSame('password_reset_required', $result);
     }
 
     public function test_change_own_password_persists_on_success(): void
@@ -274,13 +280,13 @@ class UsersServiceTest extends TestCase
 
         $result = $service->changeOwnPassword(1, 'correct-horse', 'NewPass1!', 'NewPass1!');
 
-        $this->assertSame('success', $result);
-        $this->assertSame('NewPass1!', $savedValues['password']);
+        $this->assertSame('password_reset_required', $result);
+        $this->assertNull($savedValues, 'Legacy zp_user credentials must never be updated.');
     }
 
-    public function test_save_own_profile_blocks_duplicate_email(): void
+    public function test_save_own_profile_keeps_the_verified_identity_email_immutable(): void
     {
-        $editCalls = 0;
+        $savedValues = null;
         $repo = $this->make(UserRepository::class, [
             'getUser' => fn () => [
                 'id' => 1,
@@ -291,19 +297,21 @@ class UsersServiceTest extends TestCase
                 'notifications' => 1,
                 'twoFAEnabled' => 0,
             ],
-            'usernameExist' => fn () => true,
-            'editOwn' => function () use (&$editCalls) {
-                $editCalls++;
+            'editOwn' => function (array $values) use (&$savedValues) {
+                $savedValues = $values;
 
                 return true;
             },
         ]);
-        $service = $this->makeService($repo);
+        $auth = $this->make(AuthService::class, [
+            'setUserSession' => fn () => null,
+        ]);
+        $service = $this->makeService($repo, ['authService' => $auth]);
 
         $result = $service->saveOwnProfile(1, ['user' => 'taken@example.com']);
 
-        $this->assertSame('user_exists', $result);
-        $this->assertSame(0, $editCalls, 'A duplicate email must not be persisted');
+        $this->assertSame('success', $result);
+        $this->assertSame('old@example.com', $savedValues['user']);
     }
 
     // ---------------------------------------------------------------------
@@ -438,7 +446,7 @@ class UsersServiceTest extends TestCase
         $this->assertArrayHasKey('role', $patched['fields']);
     }
 
-    public function test_self_service_methods_ignore_caller_supplied_id_and_pin_to_session(): void
+    public function test_legacy_self_service_password_method_never_reads_credentials(): void
     {
         // Self-service methods (editOwn/saveOwn*/getOwn*/changeOwnPassword) must operate on the
         // authenticated user only — over JSON-RPC a caller controls the $userId argument, so a
@@ -461,9 +469,10 @@ class UsersServiceTest extends TestCase
             },
         ]);
 
-        $this->makeService($repo)->changeOwnPassword(99, 'wrong', 'NewPass1!', 'NewPass1!');
+        $result = $this->makeService($repo)->changeOwnPassword(99, 'wrong', 'NewPass1!', 'NewPass1!');
 
-        $this->assertSame(7, $seenId, 'self-service must pin to the session user, not the caller-supplied id');
+        $this->assertSame('password_reset_required', $result);
+        $this->assertNull($seenId, 'Legacy zp_user password hashes must not be read.');
     }
 
     /**

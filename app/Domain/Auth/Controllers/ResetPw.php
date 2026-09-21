@@ -2,105 +2,88 @@
 
 namespace Leantime\Domain\Auth\Controllers;
 
-use Illuminate\Contracts\Container\BindingResolutionException;
+use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 use Leantime\Core\Controller\Controller;
-use Leantime\Core\Controller\Frontcontroller as FrontcontrollerCore;
-use Leantime\Domain\Auth\Services\Auth as AuthService;
+use Leantime\Core\Controller\Frontcontroller;
+use Leantime\Domain\Auth\Services\JuliannaAuthMailer;
+use Leantime\Domain\Auth\Support\SecureAuthRequest;
+use Leantime\Domain\JuliannaAuth\Services\JuliannaAuth;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
-class ResetPw extends Controller
+final class ResetPw extends Controller
 {
-    private AuthService $authService;
+    private JuliannaAuth $auth;
 
-    /**
-     * init - initialize private variables
-     */
-    public function init(
-        AuthService $authService
-    ): void {
-        $this->authService = $authService;
+    private JuliannaAuthMailer $mailer;
+
+    public function init(JuliannaAuth $auth, JuliannaAuthMailer $mailer): void
+    {
+        $this->auth = $auth;
+        $this->mailer = $mailer;
     }
 
-    /**
-     * get - handle get requests
-     *
-     *
-     *
-     *
-     * @throws \Exception
-     */
     public function get(array $params): Response
     {
-        if ((isset($params['id']) === true && $this->authService->validateResetLink($params['id']))) {
+        // Token validity is deliberately not disclosed on GET. Any token-shaped
+        // path gets the same form; single use and expiry are enforced on submit.
+        if (is_string($params['id'] ?? null) && $params['id'] !== '') {
             return $this->tpl->display('auth.resetPw', 'entry');
-        } else {
-            return $this->tpl->display('auth.requestPwLink', 'entry');
         }
+
+        return $this->tpl->display('auth.requestPwLink', 'entry');
     }
 
-    /**
-     * post - handle post requests
-     *
-     *
-     *
-     *
-     * @throws BindingResolutionException
-     */
     public function post(array $params): Response
     {
-        if (! isset($_POST['resetPassword'])) {
-            return FrontcontrollerCore::redirect(BASE_URL.'/auth/resetPw/');
+        if (! SecureAuthRequest::hasValidCsrf($params)) {
+            $this->tpl->setNotification('notification.form_token_incorrect', 'error');
+
+            return Frontcontroller::redirect(BASE_URL.'/auth/resetPw');
         }
 
-        if (isset($_POST['username']) === true) {
-            // Always return success to prevent db attacks checking which email address are in there
-            $this->authService->generateLinkAndSendEmail($_POST['username']);
-            $this->tpl->setNotification($this->language->__('notifications.email_was_sent_to_reset'), 'success');
+        if (is_string($params['username'] ?? null)) {
+            $email = mb_strtolower(trim($params['username']), 'UTF-8');
+            try {
+                $token = $this->auth->issuePasswordReset($email);
+                if ($token !== null) {
+                    $this->mailer->sendPasswordReset($email, $token);
+                }
+            } catch (Throwable $e) {
+                Log::error('Unable to process password-reset request', ['exception' => $e]);
+            }
 
-            return FrontcontrollerCore::redirect(BASE_URL.'/auth/resetPw/');
+            // Always the same response, including malformed and unknown email.
+            $this->tpl->setNotification('notifications.email_was_sent_to_reset', 'success');
+
+            return Frontcontroller::redirect(BASE_URL.'/auth/resetPw');
         }
 
-        if (isset($_POST['password']) === true && isset($_POST['password2']) === true) {
-            $result = $this->authService->resetPassword($_POST['password'], $_POST['password2'], $params['id']);
+        $token = is_string($params['id'] ?? null) ? $params['id'] : '';
+        $password = is_string($params['password'] ?? null) ? $params['password'] : '';
+        $confirmation = is_string($params['password2'] ?? null) ? $params['password2'] : '';
+        if ($password === '' || ! hash_equals($password, $confirmation)) {
+            $this->tpl->setNotification('notification.passwords_dont_match', 'error');
 
-            if ($result === 'success') {
-                $this->tpl->setNotification(
-                    $this->language->__('notifications.passwords_changed_successfully'),
-                    'success',
-                    'password_changed'
-                );
-
-                return FrontcontrollerCore::redirect(BASE_URL.'/auth/login');
-            }
-
-            if ($result === 'mismatch') {
-                $this->tpl->setNotification($this->language->__('notification.passwords_dont_match'), 'error');
-
-                return FrontcontrollerCore::redirect(BASE_URL.'/auth/resetPw/'.$params['id']);
-            }
-
-            if ($result === 'weak') {
-                $this->tpl->setNotification(
-                    $this->language->__('notification.password_not_strong_enough'),
-                    'error'
-                );
-
-                return FrontcontrollerCore::redirect(BASE_URL.'/auth/resetPw/'.$params['id']);
-            }
-
-            $this->tpl->setNotification(
-                $this->language->__('notifications.problem_resetting_password'),
-                'error'
-            );
-
-            return FrontcontrollerCore::redirect(BASE_URL.'/auth/resetPw/'.$params['id']);
+            return Frontcontroller::redirect(BASE_URL.'/auth/resetPw/'.rawurlencode($token));
         }
 
-        $this->tpl->setNotification(
-            $this->language->__('notifications.problem_resetting_password'),
-            'error'
-        );
+        try {
+            $changed = $token !== '' && $this->auth->resetPassword($token, $password);
+        } catch (InvalidArgumentException $e) {
+            $this->tpl->setNotification($e->getMessage(), 'error');
 
-        return FrontcontrollerCore::redirect(BASE_URL.'/auth/resetPw/'.$params['id']);
+            return Frontcontroller::redirect(BASE_URL.'/auth/resetPw/'.rawurlencode($token));
+        } catch (Throwable $e) {
+            Log::error('Unable to complete password reset', ['exception' => $e]);
+            $changed = false;
+        }
+
+        // Keep the public response identical for valid, invalid, expired, and
+        // reused tokens. The password is changed only on the valid path above.
+        $this->tpl->setNotification('notifications.password_reset_processed', 'info');
+
+        return Frontcontroller::redirect(BASE_URL.'/auth/login');
     }
 }

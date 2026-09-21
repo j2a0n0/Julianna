@@ -8,53 +8,6 @@
                'onTheClock' => $onTheClock
            ])
 
-    @if ($login::userIsAtLeast("manager", true))
-        <li class="notificationDropdown appsLink">
-        <a
-            class="dropdown-toggle profileHandler newsDropDownHandler"
-            hx-get="{{ BASE_URL }}/plugins/marketplaceplugins/getLatest"
-            hx-target="#pluginNewsDropdown"
-            hx-indicator=".htmx-news-indicator"
-            hx-trigger="click"
-            preload="mouseover"
-            data-toggle='dropdown'
-            data-tippy-content='{{ __('popover.latest_plugins') }}'
-        >
-            <i class="fa-solid fa-puzzle-piece"></i>
-
-        </a>
-
-        <div class='dropdown-menu tw-p-m tw-h-screen tw-overflow-y-auto' id='pluginNewsDropdown'>
-            <div class="htmx-indicator htmx-news-indicator">
-                <x-global::loadingText type="text" count="3" includeHeadline="true" />
-            </div>
-        </div>
-    </li>
-    @endif
-
-    <li class="notificationDropdown">
-        <a
-            class="dropdown-toggle profileHandler newsDropDownHandler"
-            hx-get="{{ BASE_URL }}/notifications/news/get"
-            hx-target="#newsDropdown"
-            hx-indicator=".htmx-news-indicator"
-            hx-trigger="click"
-            preload="mouseover"
-            data-toggle='dropdown'
-            data-tippy-content='{{ __('popover.latest_updates') }}'
-        >
-            <span class="fa-solid fa-bolt-lightning"></span>
-            <span hx-get="{{ BASE_URL }}/notifications/news-badge/get" hx-trigger="load" hx-target="this"></span>
-
-        </a>
-
-        <div class='dropdown-menu tw-p-m tw-h-screen tw-overflow-y-auto' id='newsDropdown'>
-            <div class="htmx-indicator htmx-news-indicator">
-                <x-global::loadingText type="text" count="3" includeHeadline="true" />
-            </div>
-        </div>
-    </li>
-
     <li class="notificationDropdown">
         <a
             href='javascript:void(0);'
@@ -172,29 +125,8 @@
                 {!! __("menu.what_is_this_page") !!}
                 </a>
             </li>
-            <li>
-                <a href='https://support.leantime.io' target="_blank">
-                    {!! __("menu.knowledge_base") !!}
-                    </a>
-            </li>
-            <li>
-                <a href='https://github.com/Leantime/leantime/issues' target="_blank">
-                    {!! __("menu.submit_bug") !!}
-                </a>
-            </li>
-            <li class="nav-header border">{!! __("menu.leantime_community") !!}</li>
-            <li>
-                <a href='https://discord.gg/4zMzJtAq9z' target="_blank">
-                    {!! __("menu.community") !!}
-                </a>
-            </li>
-            <li>
-                <a href='https://leantime.io/contact-us' target="_blank">
-                    {!! __("menu.contact_us") !!}
-                </a>
-            </li>
-            <li class="nav-header border">System</li>
-            <li><a href="https://github.com/Leantime/leantime/releases" target="_blank">Leantime V{{ app(\Leantime\Core\Configuration\AppSettings::class)->appVersion }}</a></li>
+            <li><a href="{{ BASE_URL }}/help/about">{{ __('links.about') }}</a></li>
+            <li><a href="{{ $sourceUrl ?? BASE_URL.'/help/about#source' }}" target="_blank" rel="noopener noreferrer">{{ __('links.source_code') }}</a></li>
         </ul>
     </li>
 

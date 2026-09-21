@@ -4,23 +4,16 @@ namespace Leantime\Domain\Plugins\Services;
 
 use Exception;
 use Illuminate\Contracts\Container\BindingResolutionException;
-use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Leantime\Core\Auth\Permissions\RequiresPermission;
-use Leantime\Core\Configuration\AppSettings;
 use Leantime\Core\Configuration\Environment as EnvironmentCore;
 use Leantime\Core\Events\DispatchesEvents;
-use Leantime\Domain\Notifications\Services\Notifications;
 use Leantime\Domain\Plugins\Models\InstalledPlugin;
 use Leantime\Domain\Plugins\Models\MarketplacePlugin;
 use Leantime\Domain\Plugins\Permissions\PluginsPermissions;
 use Leantime\Domain\Plugins\Repositories\Plugins as PluginRepository;
-use Leantime\Domain\Setting\Services\Setting as SettingsService;
-use Leantime\Domain\Users\Services\Users as UsersService;
 
 /**
  * @api
@@ -28,31 +21,6 @@ use Leantime\Domain\Users\Services\Users as UsersService;
 class Plugins
 {
     use DispatchesEvents;
-
-    /**
-     * Properties accepted from the request when building a MarketplacePlugin for install.
-     * A positive allowlist (fail-closed): the security-sensitive control fields `type` and
-     * `marketplaceUrl` are deliberately absent so they can't be mass-assigned from client input,
-     * and `version` is intentionally excluded because the caller handles it separately. Everything
-     * here is benign marketplace descriptor/display data carried by the install round-trip.
-     */
-    private const MARKETPLACE_INSTALL_PROPS = [
-        'identifier',
-        'license',
-        'name',
-        'excerpt',
-        'description',
-        'imageUrl',
-        'icon',
-        'vendorDisplayName',
-        'vendorId',
-        'marketplaceId',
-        'compatibility',
-        'categories',
-        'tags',
-        'rating',
-        'reviewCount',
-    ];
 
     private string $pluginDirectory = ROOT.'/../app/Plugins/';
 
@@ -78,10 +46,6 @@ class Plugins
         'folder' => 'phar',
     ];
 
-    public string $marketplaceUrl;
-
-    private int $timeout = 60;
-
     /**
      * @return void
      *
@@ -90,20 +54,7 @@ class Plugins
     public function __construct(
         private PluginRepository $pluginRepository,
         private EnvironmentCore $config,
-        private SettingsService $settingsService,
-        private UsersService $usersService,
-        private AppSettings $appSettings,
-    ) {
-        $this->marketplaceUrl = rtrim($config->marketplaceUrl, '/');
-        // $this->marketplaceUrl = 'https://marketplace.leantime.test';
-    }
-
-    protected function httpClient()
-    {
-
-        return Http::withoutVerifying()->timeout($this->timeout);
-
-    }
+    ) {}
 
     /**
      * Retrieves all plugins, optionally filtering only the enabled ones.
@@ -419,506 +370,52 @@ class Plugins
     }
 
     /**
-     * Fetches marketplace plugins from a specified URL and organizes them by category.
+     * Julianna intentionally has no remote marketplace.
      *
-     * @param  int  $page  The page number to fetch.
-     * @param  string  $query  Optional search query to filter plugins by name or identifier.
-     * @return array An associative array containing plugin categories, each with associated plugins.
-     *               The categories include metadata such as name, description, and plugins categorized under them.
+     * @return array<never>
      */
     public function getMarketplacePlugins(int $page, string $query = ''): array
     {
-        $plugins = $this->httpClient()->get(
-            "{$this->marketplaceUrl}/ltmp-api"
-            .(! empty($query) ? "/search/$query" : '/index')
-            ."/$page".'?lt-v='.$this->appSettings->appVersion.'&groupBy=category'
-        );
-
-        $pluginArray = $plugins->collect()->toArray();
-
-        $plugins = [];
-        $pluginsFlat = [];
-
-        if (isset($pluginArray['categories'])) {
-            foreach ($pluginArray['categories'] as $category) {
-
-                $plugins[$category['slug']] = [
-                    'name' => $category['name'],
-                    'description' => $category['description'],
-                    'plugins' => [],
-
-                ];
-
-                foreach ($category['products'] as $plugin) {
-                    $priceString = '';
-                    if (! empty($plugin['sub_interval']) && $plugin['sub_interval'] === 'year') {
-                        $price = $plugin['price'] ?? 0;
-                        $months = 12;
-                        $lowestUserTier = 10;
-                        $perUserMonth = round(($price / $months / $lowestUserTier), 2);
-                        $priceString = '$'.$perUserMonth.' per user/month (billed annually) <a href="javascript:void(0)" data-tippy-content="10 user minimum, billed annually"><i class="fa fa-circle-info"></i></a>';
-                    }
-
-                    $plugins[$category['slug']]['plugins'][Str::lower($plugin['identifier'])] = self::buildMarketplacePluginFromListData($plugin, $priceString);
-
-                    $pluginsFlat[Str::lower($plugin['identifier'])] = $plugins[$category['slug']]['plugins'][Str::lower($plugin['identifier'])];
-                }
-            }
-        }
-
-        Cache::store('installation')->set('plugins.marketplacePlugins', $plugins);
-        Cache::store('installation')->set('plugins.marketplacePluginsFlat', $pluginsFlat);
-
-        return $plugins;
+        return [];
     }
 
+    /**
+     * Julianna does not query remote plugin update services.
+     *
+     * @return array<never>
+     */
     public function getLatestPluginUpdates(int $page, string $query = ''): array
     {
-        $plugins = $this->httpClient()->get(
-            "{$this->marketplaceUrl}/ltmp-api"
-            .(! empty($query) ? "/search/$query" : '/index')
-            ."/$page".'?lt-v='.$this->appSettings->appVersion
-        );
-
-        $pluginArray = $plugins->collect()->toArray();
-
-        $plugins = [];
-        $pluginsFlat = [];
-
-        if (isset($pluginArray['categories'])) {
-            foreach ($pluginArray['categories'] as $category) {
-
-                $plugins[$category['slug']] = [
-                    'name' => $category['name'],
-                    'description' => $category['description'],
-                    'plugins' => [],
-
-                ];
-
-                foreach ($category['products'] as $plugin) {
-                    $priceString = '';
-                    if (! empty($plugin['sub_interval']) && $plugin['sub_interval'] === 'year') {
-                        $price = $plugin['price'] ?? 0;
-                        $months = 12;
-                        $lowestUserTier = 10;
-                        $perUserMonth = round(($price / $months / $lowestUserTier), 2);
-                        $priceString = '$'.$perUserMonth.' per user/month (billed annually) <a href="javascript:void(0)" data-tippy-content="10 user minimum, billed annually"><i class="fa fa-circle-info"></i></a>';
-                    }
-
-                    $plugins[$category['slug']]['plugins'][Str::lower($plugin['identifier'])] = self::buildMarketplacePluginFromListData($plugin, $priceString);
-
-                    $pluginsFlat[Str::lower($plugin['identifier'])] = $plugins[$category['slug']]['plugins'][Str::lower($plugin['identifier'])];
-                }
-            }
-        }
-
-        Cache::store('installation')->set('plugins.marketplacePlugins', $plugins);
-        Cache::store('installation')->set('plugins.marketplacePluginsFlat', $pluginsFlat);
-
-        return $pluginsFlat;
+        return [];
     }
 
-    /**
-     * Builds a MarketplacePlugin from listing API data with proper type coercion.
-     *
-     * The marketplace API may return unexpected types (string instead of array,
-     * null instead of int, etc.) so all values are explicitly cast to match the
-     * MarketplacePlugin model's typed properties.
-     *
-     * @param  array  $plugin  Raw plugin data from the marketplace listing API.
-     * @param  string  $priceString  Pre-formatted monthly price string.
-     * @return MarketplacePlugin The hydrated plugin model.
-     */
-    private static function buildMarketplacePluginFromListData(array $plugin, string $priceString): MarketplacePlugin
+    public function getMarketplacePlugin(string $identifier): false
     {
-        return build(new MarketplacePlugin)
-            ->set('identifier', (string) ($plugin['identifier'] ?? ''))
-            ->set('name', (string) ($plugin['post_title'] ?? ''))
-            ->set('excerpt', (string) ($plugin['excerpt'] ?? ''))
-            ->set('description', '')
-            ->set('imageUrl', (string) ($plugin['icon'] ?? ''))
-            ->set('icon', (string) ($plugin['icon'] ?? ''))
-            ->set('vendorDisplayName', (string) ($plugin['vendor'] ?? ''))
-            ->set('vendorId', (int) ($plugin['vendor_id'] ?? 0))
-            ->set('vendorEmail', (string) ($plugin['vendor_email'] ?? ''))
-            ->set('marketplaceUrl', '')
-            ->set('startingPrice', '$'.($plugin['price'] ?? ''))
-            ->set('calculatedMonthlyPrice', $priceString)
-            ->set('rating', (string) ($plugin['rating'] ?? ''))
-            ->set('reviewCount', (int) ($plugin['review_count'] ?? 0))
-            ->set('reviews', is_array($plugin['reviews'] ?? null) ? $plugin['reviews'] : [])
-            ->set('marketplaceId', (string) ($plugin['product_id'] ?? ''))
-            ->set('version', (string) ($plugin['version'] ?? ''))
-            ->set('pricingTiers', is_array($plugin['tiers'] ?? null) ? $plugin['tiers'] : [])
-            ->set('categories', is_array($plugin['categories'] ?? null) ? $plugin['categories'] : [])
-            ->set('tags', is_array($plugin['tags'] ?? null) ? $plugin['tags'] : [])
-            ->set('compatibility', is_array($plugin['compatibility'] ?? null) ? $plugin['compatibility'] : [])
-            ->get();
+        return false;
     }
 
     /**
-     * Builds a MarketplacePlugin from raw request properties.
-     *
-     * Request data arrives with every field encoded as a string. Any field whose
-     * value is a valid JSON string (arrays/objects) is decoded back into its native
-     * structure before being assigned to the model. The 'version' field is treated
-     * separately by the caller and is therefore expected to already be removed.
-     *
-     * @param  array<string, mixed>  $pluginProps  Raw plugin properties from the request (without 'version').
-     * @return MarketplacePlugin The hydrated plugin model.
-     *
-     * @api
-     */
-    #[RequiresPermission(PluginsPermissions::MANAGE, global: true)]
-    public function buildMarketplacePluginFromRequest(array $pluginProps): MarketplacePlugin
-    {
-        $builder = build(new MarketplacePlugin);
-
-        foreach ($pluginProps as $key => $value) {
-            // Only accept the properties the install round-trip legitimately carries. Everything
-            // else — notably control fields like `type` and `marketplaceUrl` — is ignored, so a
-            // request can't mass-assign arbitrary model state (the download always targets the
-            // server-configured marketplace, keyed by identifier).
-            if (! in_array($key, self::MARKETPLACE_INSTALL_PROPS, true)) {
-                continue;
-            }
-
-            if (is_string($value)) {
-                $newValue = json_decode(json: $value, flags: JSON_OBJECT_AS_ARRAY);
-
-                if (json_last_error() === JSON_ERROR_NONE && $newValue !== null) {
-                    $value = $newValue;
-                }
-            }
-
-            $builder->set($key, $value);
-        }
-
-        return $builder->get();
-    }
-
-    /**
-     * Determines whether a marketplace plugin belongs to the "bundles" category.
-     *
-     * @param  MarketplacePlugin  $plugin  The plugin to inspect.
-     * @return bool True if the plugin is part of the bundles category.
-     *
-     * @api
-     */
-    public function isBundle(MarketplacePlugin $plugin): bool
-    {
-        return collect($plugin->categories)->where('slug', '=', 'bundles')->count() > 0;
-    }
-
-    /**
-     * Parses a marketplace download/install RequestException into a clean,
-     * user-facing error message.
-     *
-     * The marketplace responds with status-code prefixes (e.g.
-     * "HTTP request returned status code 500:") wrapped around a JSON body. This
-     * strips those prefixes, decodes the JSON and returns the most specific
-     * message available, falling back to a generic installation error.
-     *
-     * @param  RequestException  $exception  The exception thrown while installing.
-     * @return string A clean error message safe to show to the user.
-     *
-     * @api
-     */
-    public function parseMarketplaceError(RequestException $exception): string
-    {
-        $errorJson = str_replace('HTTP request returned status code 500:', '', $exception->getMessage());
-        $errorJson = str_replace('HTTP request returned status code 200:', '', $errorJson);
-        $errors = json_decode(trim($errorJson));
-
-        return $errors->error ?? $errors->message ?? 'There was an error installing the plugin';
-    }
-
-    /**
-     * Retrieves a marketplace plugin's details by its identifier.
-     *
-     * @param  string  $identifier  The unique identifier of the marketplace plugin.
-     * @return MarketplacePlugin|false Returns a MarketplacePlugin instance if found, or false if the plugin could not be retrieved.
-     *
-     * @api
-     */
-    public function getMarketplacePlugin(string $identifier): MarketplacePlugin|false
-    {
-        $response = $this->httpClient()->get("$this->marketplaceUrl/ltmp-api/details/$identifier?lt-v=".$this->appSettings->appVersion);
-
-        if (! $response->ok()) {
-            return false;
-        }
-
-        $data = $response->json();
-
-        return build(new MarketplacePlugin)
-            ->set('identifier', $identifier)
-            ->set('name', (string) ($data['name'] ?? ''))
-            ->set('icon', (string) ($data['icon'] ?? ''))
-            ->set('excerpt', (string) ($data['excerpt'] ?? ''))
-            ->set('imageUrl', (string) ($data['icon'] ?? ''))
-            ->set('description', nl2br((string) ($data['description'] ?? '')))
-            ->set('marketplaceUrl', (string) ($data['marketplaceUrl'] ?? ''))
-            ->set('vendorId', (int) ($data['vendor']['id'] ?? 0))
-            ->set('vendorDisplayName', (string) ($data['vendor']['name'] ?? ''))
-            ->set('vendorEmail', (string) ($data['vendor']['email'] ?? ''))
-            ->set('rating', (string) ($data['reviews']['average'] ?? 'N/A'))
-            ->set('reviewCount', (int) ($data['reviews']['count'] ?? 0))
-            ->set('reviews', is_array($data['reviews']['list'] ?? null) ? $data['reviews']['list'] : [])
-            ->set('marketplaceId', (string) ($data['productId'] ?? ''))
-            ->set('version', (string) ($data['version'] ?? ''))
-            ->set('pricingTiers', is_array($data['tiers'] ?? null) ? $data['tiers'] : [])
-            ->set('categories', is_array($data['categories'] ?? null) ? $data['categories'] : [])
-            ->set('tags', is_array($data['tags'] ?? null) ? $data['tags'] : [])
-            ->set('compatibility', is_array($data['compatibility'] ?? null) ? $data['compatibility'] : [])
-            ->get();
-    }
-
-    /**
-     * Installs a marketplace plugin by downloading, extracting, and registering it in the plugin repository.
-     *
-     * @param  MarketplacePlugin  $plugin  The marketplace plugin to be installed, including its identifier and license key.
-     * @param  string  $version  The version of the plugin to be installed.
-     *
-     * @throws RequestException If the HTTP request to download the plugin fails or returns an unexpected response type.
-     * @throws \Exception If the plugin cannot be downloaded, removed, or added to the system.
-     * @throws \RuntimeException If the plugin directory cannot be created.
+     * Remote plugin installation is permanently unavailable. Administrators
+     * may install audited local folder plugins with the normal local commands.
      */
     public function installMarketplacePlugin(MarketplacePlugin $plugin, string $version): void
     {
-
-        $this->clearCache();
-
-        $response = $this->httpClient()->withHeaders([
-            'X-License-Key' => $plugin->license,
-            'X-Instance-Id' => $this->settingsService->getCompanyId(),
-            'X-User-Count' => $this->usersService->getNumberOfUsers(activeOnly: true, includeApi: false),
-            'X-Leantime-Version' => $this->appSettings->appVersion,
-        ])->get("{$this->marketplaceUrl}/ltmp-api/download/{$plugin->identifier}/{$version}");
-
-        if (! $response->ok()) {
-            throw new RequestException($response);
-        }
-
-        if ($response->header('Content-Type') !== 'application/zip') {
-            throw new RequestException($response);
-        }
-
-        $filename = $response->header('Content-Disposition');
-        $filename = substr($filename, strpos($filename, 'filename=') + 9);
-        $foldername = Str::studly(basename($filename, '.zip'));
-        $filename = Str::finish($foldername, '.zip');
-
-        if (
-            ! file_put_contents(
-                $temporaryFile = Str::finish(sys_get_temp_dir(), '/').$filename,
-                $response->body()
-            )
-        ) {
-            throw new \Exception(__('notification.plugin_cant_download'));
-        }
-
-        if (
-            is_dir($pluginDir = "{$this->pluginDirectory}{$foldername}")
-            && ! File::deleteDirectory($pluginDir)
-        ) {
-            throw new \Exception(__('notification.plugin_cant_remove'));
-        }
-
-        if (! mkdir($pluginDir) && ! is_dir($pluginDir)) {
-            throw new \RuntimeException(sprintf('Directory "%s" was not created', $pluginDir));
-        }
-
-        $zip = new \ZipArchive;
-
-        match ($zip->open($temporaryFile)) {
-            \ZipArchive::ER_EXISTS => throw new \Exception(__('notification.plugin_zip_exists')),
-            \ZipArchive::ER_INCONS => throw new \Exception(__('notification.plugin_zip_inconsistent')),
-            \ZipArchive::ER_INVAL => throw new \Exception(__('notification.plugin_zip_invalid_arg')),
-            \ZipArchive::ER_MEMORY => throw new \Exception(__('notification.plugin_zip_malloc')),
-            \ZipArchive::ER_NOENT => throw new \Exception(__('notification.plugin_zip_no_file')),
-            \ZipArchive::ER_NOZIP => throw new \Exception(__('notification.plugin_zip_not_zip')),
-            \ZipArchive::ER_OPEN => throw new \Exception(__('notification.plugin_zip_cant_open')),
-            \ZipArchive::ER_READ => throw new \Exception(__('notification.plugin_zip_read_err')),
-            \ZipArchive::ER_SEEK => throw new \Exception(__('notification.plugin_zip_seek_err')),
-            default => throw new \Exception(__('notification.plugin_zip_unknown_err')),
-            true => null,
-        };
-
-        if (! $zip->extractTo($pluginDir)) {
-            throw new \Exception(__('notification.plugin_zip_cant_extract'));
-        }
-
-        $zip->close();
-
-        unlink($temporaryFile);
-
-        // read the composer.json content from the plugin phar file
-        $pluginModel = $this->createPluginFromComposer($foldername, $plugin->license);
-
-        if (! $this->pluginRepository->addPlugin($pluginModel)) {
-            throw new \Exception(__('notification_cant_add_to_db'));
-        }
+        throw new \RuntimeException('Remote plugin installation is not available in Julianna.');
     }
 
     /**
-     * Validates the license of a given plugin.
-     *
-     * @param  InstalledPlugin  $plugin  The plugin object for which the license validity is being checked.
-     * @return bool Returns true if the license is valid or the plugin is not of the marketplace type; returns false otherwise.
+     * Fresh Julianna installations do not support marketplace plugin types.
      */
     public function validLicense(InstalledPlugin $plugin): bool
     {
-
-        if ($plugin->getType() !== $this->pluginTypes['marketplace']) {
-            return true;
-        }
-
-        $numberOfUsers = $this->usersService->getNumberOfUsers(activeOnly: true, includeApi: false);
-        $instanceId = $this->settingsService->getCompanyId();
-
-        $phar = new \Phar(
-            Str::finish($this->pluginDirectory, DIRECTORY_SEPARATOR)
-            .Str::finish($plugin->foldername, DIRECTORY_SEPARATOR)
-            .Str::finish($plugin->foldername, '.phar')
-        );
-
-        $signature = $phar->getSignature();
-
-        $response = null;
-
-        try {
-            $response = $this->httpClient()->withHeaders([
-                'X-License-Key' => $plugin->license,
-                'X-Instance-Id' => $instanceId,
-                'X-User-Count' => $numberOfUsers,
-                'X-Phar-Hash' => $signature,
-                'X-Leantime-Version' => $this->appSettings->appVersion,
-            ])->get("{$this->marketplaceUrl}/ltmp-api/verify/{$plugin->getIdentifier()}");
-
-        } catch (\Exception $e) {
-            Log::error($e);
-        }
-
-        // Could not reach the marketplace (transient error); keep the plugin enabled.
-        if ($response === null) {
-            return true;
-        }
-
-        $jsonResult = [];
-
-        try {
-            $body = $response->getBody()->getContents();
-            $jsonResult = json_decode($body, true);
-        } catch (Exception $e) {
-            Log::error($e);
-        }
-
-        if ($response->ok() && $jsonResult['valid'] === false) {
-
-            // Notify owners of system
-            $this->disablePluginNotifyOwner($plugin->id);
-
-            return false;
-        }
-
-        return true;
+        return $plugin->getType() !== $this->pluginTypes['marketplace'];
     }
 
     /**
-     * Disables the specified plugin and notifies the owner or administrators of the action.
-     *
-     * @param  int  $pluginId  The ID of the plugin to disable.
-     * @return void
-     */
-    public function disablePluginNotifyOwner($pluginId)
-    {
-        $this->clearCache();
-        $this->disablePlugin($pluginId);
-
-        // Get all admin users
-        $userService = app()->make(UsersService::class);
-        $notificationService = app()->make(Notifications::class);
-        $plugin = $this->pluginRepository->getPlugin($pluginId);
-
-        // Create notification for all admin users
-        $admins = collect($userService->getAll())->filter(fn ($user) => in_array($user['role'], [40, 50]));
-
-        $notifications = $admins->map(fn ($admin) => [
-            'userId' => $admin['id'],
-            'read' => '0',
-            'type' => 'plugin_license',
-            'module' => 'plugins',
-            'moduleId' => $pluginId,
-            'message' => sprintf("The plugin '%s' has been disabled due to license validation failure. Please check your marketplace subscription.", $plugin->name),
-            'datetime' => date('Y-m-d H:i:s'),
-            'url' => '/plugins/show',
-            'authorId' => 1,
-        ])->toArray();
-
-        $notificationService->addNotifications($notifications);
-    }
-
-    /**
-     * Deactivates the specified plugin by performing necessary operations
-     * such as sending a request to the marketplace and validating the response.
-     *
-     * @param  InstalledPlugin  $plugin  The plugin instance to be deactivated.
-     * @return bool Returns true if the plugin was successfully deactivated
-     *              or does not require deactivation; false otherwise.
+     * No remote deactivation is required for local plugins.
      */
     public function deactivate(InstalledPlugin $plugin): bool
     {
-        if ($plugin->getType() !== $this->pluginTypes['marketplace']) {
-            return true;
-        }
-
-        $numberOfUsers = $this->usersService->getNumberOfUsers(activeOnly: true, includeApi: false);
-        $instanceId = $this->settingsService->getCompanyId();
-
-        $phar = new \Phar(
-            Str::finish($this->pluginDirectory, DIRECTORY_SEPARATOR)
-            .Str::finish($plugin->foldername, DIRECTORY_SEPARATOR)
-            .Str::finish($plugin->foldername, '.phar')
-        );
-
-        $signature = $phar->getSignature();
-
-        $response = null;
-
-        try {
-            $response = $this->httpClient()->withHeaders([
-                'X-License-Key' => $plugin->license,
-                'X-Instance-Id' => $instanceId,
-                'X-User-Count' => $numberOfUsers,
-                'X-Phar-Hash' => $signature,
-                'X-Leantime-Version' => $this->appSettings->appVersion,
-            ])->get("{$this->marketplaceUrl}/ltmp-api/deactivate/{$plugin->getIdentifier()}");
-
-        } catch (\Exception $e) {
-            Log::error($e);
-        }
-
-        // Could not reach the marketplace (transient error); treat as a no-op success.
-        if ($response === null) {
-            return true;
-        }
-
-        $jsonResult = [];
-
-        try {
-            $body = $response->getBody()->getContents();
-            $jsonResult = json_decode($body, true);
-        } catch (Exception $e) {
-            Log::error($e);
-        }
-
-        if ($response->ok() && $jsonResult['valid'] === false) {
-            Log::warning($jsonResult['error']);
-
-            return false;
-        }
-
         return true;
     }
 

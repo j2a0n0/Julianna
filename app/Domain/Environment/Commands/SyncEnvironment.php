@@ -14,7 +14,7 @@ class SyncEnvironment extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $output->writeln('Starting environment variable sync...');
+        $output->writeln('Starting Julianna environment variable sync...');
 
         $envFile = base_path('.env');
 
@@ -23,7 +23,7 @@ class SyncEnvironment extends Command
 
         // Get all environment variables
         foreach ($_ENV as $name => $value) {
-            if (str_starts_with($name, 'LEAN_')) {
+            if (str_starts_with($name, 'JULIANNA_')) {
                 $escapedValue = str_replace(['\\', '"', '$'], ['\\\\', '\\"', '\\$'], $value);
                 file_put_contents($envFile, "{$name}=\"{$escapedValue}\"\n", FILE_APPEND);
             }
@@ -32,7 +32,7 @@ class SyncEnvironment extends Command
         // Set proper permissions
         chmod($envFile, 0640);
 
-        $output->writeln('Environment sync completed.');
+        $output->writeln('Julianna environment sync completed.');
 
         return Command::SUCCESS;
     }

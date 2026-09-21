@@ -11,7 +11,7 @@ class InstallCest
 {
     public function _before(AcceptanceTester $I) {}
 
-    #[Group('install, api')]
+    #[Group('install', 'api', 'fr-ch-localization')]
     public function installPageWorks(AcceptanceTester $I): void
     {
         $I->amOnPage('/install');
@@ -20,13 +20,13 @@ class InstallCest
         $I->see('Install');
     }
 
-    #[Group('install, api')]
+    #[Group('install', 'api', 'fr-ch-localization')]
     #[Depends('installPageWorks')]
     public function createDBSuccessfully(AcceptanceTester $I, Install $installPage): void
     {
         $installPage->install(
-            'test@leantime.io',
-            'Test123456!',
+            'owner@julianna.test',
+            'JuliannaTest123!',
             'John',
             'Smith',
             'Smith & Co'

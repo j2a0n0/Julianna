@@ -54,6 +54,11 @@ class AcceptanceTester extends \Codeception\Actor
      */
     public function _failed(\Codeception\TestInterface $test, $fail)
     {
-        $this->makeScreenshot('failed_'.$test->getName());
+        $artifactName = 'failed_'.preg_replace('/[^A-Za-z0-9_.-]+/', '_', $test->getName());
+        $this->makeScreenshot($artifactName);
+        file_put_contents(
+            codecept_output_dir().$artifactName.'.html',
+            $this->grabPageSource(),
+        );
     }
 }

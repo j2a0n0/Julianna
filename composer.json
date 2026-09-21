@@ -1,37 +1,21 @@
 {
-    "name": "leantime/leantime",
-    "description": "Open source project management system for non-project managers. Simple like Trello, powerful like Jira. Built with neurodiversity in mind.",
+    "name": "julianna/julianna",
+    "description": "Julianna is a self-hosted project and work management platform built for focused teams.",
     "type": "project",
     "keywords": [
         "project-management", "task-management", "kanban", "gantt", "php", "mysql",
         "jira-alternative", "clickup-alternative", "asana-alternative", "agile",
         "scrum", "lean", "innovation-management", "neurodiversity-friendly"
     ],
-    "homepage": "http://leantime.io",
     "readme": "README.md",
     "license": "AGPL-3.0-only",
     "authors": [
         {
-            "name": "Marcel Folaron",
-            "email": "marcel@leantime.io",
-            "homepage": "http://leantime.io"
-        }
-    ],
-    "support": {
-        "email": "support@leantime.io",
-        "issues": "https://github.com/Leantime/leantime/issues",
-        "docs": "https://docs.leantime.io",
-        "chat": "https://discord.com/invite/YJeNS7VkQh",
-        "security": "https://leantime.io/responsible-disclosure-policy/"
-    },
-    "funding": [
-        {
-            "type": "Github Sponsor",
-            "url": "https://github.com/sponsors/Leantime"
+            "name": "Julianna contributors"
         },
         {
-            "type": "Support Leantime",
-            "url": "https://marketplace.leantime.io/product/support-leantime"
+            "name": "Leantime contributors",
+            "role": "Original authors"
         }
     ],
     "require": {
@@ -51,8 +35,8 @@
         "ext-gd": "*",
         "ext-fileinfo": "*",
         "ext-dom": "*",
-        "laravel/framework": "^v11.44",
-        "guzzlehttp/guzzle": "^7.9",
+        "laravel/framework": "^12.60",
+        "guzzlehttp/guzzle": "^7.15.2",
         "aws/aws-sdk-php": "^3.344.6",
         "phpmailer/phpmailer": "^6.6",
         "robthree/twofactorauth": "^1.8",
@@ -68,15 +52,14 @@
         "vedmant/laravel-feed-reader": "^1.6",
         "carbon-cli/carbon-cli": "^1.2",
         "metasyntactical/composer-plugin-license-check": "^2.1",
-        "phpseclib/phpseclib": "~3.0",
+        "phpseclib/phpseclib": "^4.0",
         "spatie/icalendar-generator": "^2.6",
         "sentry/sentry-laravel": "^4.13",
         "stripe/stripe-php": "^v17.3.0",
-        "crispchat/php-crisp-api": "^1.7",
         "php-http/httplug": "^2.4",
         "laravel/sanctum": "^4.0",
         "doctrine/dbal": "^3.5.1",
-        "laravel/socialite": "^5.16",
+        "laravel/socialite": "^5.31",
         "socialiteproviders/authentik": "^5.2",
         "socialiteproviders/auth0": "^4.2",
         "socialiteproviders/gitea": "^4.1",
@@ -85,7 +68,7 @@
         "socialiteproviders/google": "^4.1",
         "socialiteproviders/keycloak": "^5.3",
         "socialiteproviders/laravelpassport": "^4.3",
-        "socialiteproviders/microsoft": "^4.6",
+        "socialiteproviders/microsoft": "^4.10",
         "socialiteproviders/microsoft-azure": "^5.2",
         "socialiteproviders/okta": "^4.4",
         "socialiteproviders/propelauth": "^4.0",
@@ -95,11 +78,8 @@
         "php-http/guzzle7-adapter": "^1.1",
         "symfony/cache": "^7.2",
         "symfony/yaml": "^7.2",
-        "prism-php/prism": "^0.57.0",
-        "inspector-apm/neuron-ai": "1.12.8",
         "johngrogg/ics-parser": "^3",
         "sabre/dav": "^4.7",
-        "hkulekci/qdrant": "^0.5.8",
         "league/flysystem-aws-s3-v3": "^3.0",
         "league/flysystem-path-prefixing": "^3.0",
         "laravel/mcp": "^0.1.1"
@@ -121,7 +101,6 @@
         "zebra-north/phpcs-short-types": "^1.0",
         "laravel/pint": "^1.17",
         "phpstan/phpstan": "^1.10",
-        "leantime/leantime-documentor": "dev-main",
         "mockery/mockery": "^1.6"
     },
     "provide": {
@@ -157,12 +136,6 @@
             "app/helpers.php"
         ]
     },
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/leantime/leantime-documentor.git"
-        }
-    ],
     "config": {
         "platform-check": false,
         "platform": {

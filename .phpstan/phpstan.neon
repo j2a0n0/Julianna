@@ -14,8 +14,9 @@ parameters:
         - ../.phpstan/Rules
     excludePaths:
         - ../app/Plugins/*
+    # Dependencies are resolved through Composer autoload. Scanning every
+    # vendor file also includes undeployed local sync-conflict copies.
     scanDirectories:
-        - ../vendor
         - ../config
     stubFiles:
         # Declares Leantime's runtime-registered methods (Str/Carbon macros, Collection::countNested,

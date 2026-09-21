@@ -3,6 +3,7 @@
 namespace Leantime\Views\Composers;
 
 use Leantime\Core\Configuration\AppSettings;
+use Leantime\Core\Configuration\Environment;
 use Leantime\Core\UI\Composer;
 
 class Footer extends Composer
@@ -13,15 +14,20 @@ class Footer extends Composer
 
     protected AppSettings $settings;
 
-    public function init(AppSettings $settings): void
+    protected Environment $config;
+
+    public function init(AppSettings $settings, Environment $config): void
     {
         $this->settings = $settings;
+        $this->config = $config;
     }
 
     public function with(): array
     {
         return [
-            'version' => $this->settings->appVersion,
+            'version' => trim((string) ($this->config->version ?? '')) ?: $this->settings->appVersion,
+            'commit' => trim((string) ($this->config->commit ?? '')),
+            'sourceUrl' => trim((string) ($this->config->sourceUrl ?? '')),
         ];
     }
 }

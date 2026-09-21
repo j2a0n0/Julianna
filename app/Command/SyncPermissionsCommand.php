@@ -18,9 +18,9 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * vocabulary into the database.
  *
  * Usage:
- *   php bin/leantime permissions:sync            # upsert the vocabulary
- *   php bin/leantime permissions:sync --seed     # also (re)grant built-in role defaults
- *   php bin/leantime permissions:sync --prune    # also remove permissions no longer declared
+ *   php bin/julianna permissions:sync            # upsert the vocabulary
+ *   php bin/julianna permissions:sync --seed     # also (re)grant built-in role defaults
+ *   php bin/julianna permissions:sync --prune    # also remove permissions no longer declared
  */
 #[AsCommand(
     name: 'permissions:sync',

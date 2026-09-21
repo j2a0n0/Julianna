@@ -1,8 +1,10 @@
 
 
+name: julianna-dev
+
 services:
-  leantime-dev:
-    container_name: leantime-dev
+  julianna-dev:
+    container_name: julianna-dev
     build: .
     ports:
       - "5080:8080" #Using ports that are hopefully available. format is: 80XX
@@ -15,18 +17,18 @@ services:
      - "./xdebug.ini:/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini"
      - "./error_reporting.ini:/usr/local/etc/php/conf.d/error_reporting.ini"
     environment:
-      LEAN_DB_HOST: 'leantime-db'
-      LEAN_DB_USER: 'leantime'
-      LEAN_DB_PASSWORD: 'leantime'
-      LEAN_DB_DATABASE: 'leantime'
-      LEAN_DB_PORT: '3306'
+      JULIANNA_DB_HOST: 'julianna-db'
+      JULIANNA_DB_USER: 'julianna'
+      JULIANNA_DB_PASSWORD: 'julianna'
+      JULIANNA_DB_DATABASE: 'julianna'
+      JULIANNA_DB_PORT: '3306'
 
     depends_on:
-      leantime-db:
+      julianna-db:
         condition: service_healthy
     networks:
-      - leantime_internal
-      - leantime
+      - julianna_internal
+      - julianna
 #      - traefik
 #    labels:
 #      - "traefik.enable=true"
@@ -34,31 +36,31 @@ services:
 #      - "traefik.docker.network=traefik"
 #
 #      # HTTP Router
-#      - "traefik.http.routers.leantime.rule=Host(`leantime.docker.local`)"
-#      - "traefik.http.services.leantime.loadbalancer.server.port=8080"
-#      - "traefik.http.routers.leantime.tls=true"
+#      - "traefik.http.routers.julianna.rule=Host(`julianna.docker.local`)"
+#      - "traefik.http.services.julianna.loadbalancer.server.port=8080"
+#      - "traefik.http.routers.julianna.tls=true"
 
 
-  leantime-redis:
-    container_name: leantime-redis
+  julianna-redis:
+    container_name: julianna-redis
     image: redis:4.0
     ports:
       - "6379"
     networks:
-      - leantime_internal
-  leantime-db:
+      - julianna_internal
+  julianna-db:
     image: mysql:8.4
     ports:
       - "3306"
     environment:
-      MYSQL_ROOT_PASSWORD: 'leantime'
-      MYSQL_USER: 'leantime'
-      MYSQL_PASSWORD: 'leantime'
-      MYSQL_DATABASE: 'leantime'
+      MYSQL_ROOT_PASSWORD: 'julianna'
+      MYSQL_USER: 'julianna'
+      MYSQL_PASSWORD: 'julianna'
+      MYSQL_DATABASE: 'julianna'
     networks:
-      - leantime_internal
+      - julianna_internal
     volumes:
-      - leantime-mysql:/var/lib/mysql:rw
+      - julianna-mysql:/var/lib/mysql:rw
     healthcheck:
       test: "mysql -u$$MYSQL_USER -p$$MYSQL_PASSWORD -e 'SELECT 1'"
       interval: 5s
@@ -75,7 +77,7 @@ services:
       - "4444"
       - "7900"
     networks:
-      - leantime_internal
+      - julianna_internal
   maildev:
     image: maildev/maildev
     environment:
@@ -84,27 +86,27 @@ services:
     ports:
       - "8081"
     networks:
-      - leantime_internal
+      - julianna_internal
   s3ninja:
     image: scireum/s3-ninja
     ports:
       - "8083"
     networks:
-      - leantime_internal
+      - julianna_internal
     volumes:
       - s3ninja-data:/home/sirius/data
 
 
 networks:
-  leantime_internal:
+  julianna_internal:
     driver: bridge
-    name: leantime_internal
-  leantime:
+    name: julianna_internal
+  julianna:
     driver: bridge
 #  traefik:
 #    external: true
 #    name: traefik
 
 volumes:
-  leantime-mysql:
+  julianna-mysql:
   s3ninja-data:

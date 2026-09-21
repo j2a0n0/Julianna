@@ -102,7 +102,7 @@
                         <h4 class="widgettitle title-light">{!! __('label.contact_information') !!}</h4>
 
                         <label for="user">{!! __('label.email') !!}</label> <x-global::forms.text-input
-                            name="user" id="user" value="{{ $values['user'] }}" /><br />
+                            name="user" id="user" value="{{ $values['user'] }}" readonly /><br />
 
                         <label for="phone">{!! __('label.phone') !!}</label> <x-global::forms.text-input
                             name="phone" id="phone"

@@ -4,7 +4,6 @@ namespace Leantime\Domain\Widgets\Services;
 
 use Illuminate\Support\Facades\Log;
 use Leantime\Domain\Projects\Services\Projects as ProjectService;
-use Leantime\Domain\Reports\Services\Reports as ReportService;
 use Leantime\Domain\Setting\Services\Setting as SettingService;
 use Leantime\Domain\Tickets\Services\Tickets as TicketService;
 use Leantime\Domain\Users\Services\Users as UserService;
@@ -26,7 +25,6 @@ class Dashboard
      * @param  SettingService  $settingsService  The setting service.
      * @param  ProjectService  $projectsService  The projects service.
      * @param  UserService  $usersService  The users service.
-     * @param  ReportService  $reportService  The reports service (anonymous telemetry).
      * @param  Widgets  $widgetService  The widgets service.
      */
     public function __construct(
@@ -34,29 +32,8 @@ class Dashboard
         protected SettingService $settingsService,
         protected ProjectService $projectsService,
         protected UserService $usersService,
-        protected ReportService $reportService,
         protected Widgets $widgetService,
     ) {}
-
-    /**
-     * Fires the anonymous telemetry collection and waits for it to complete.
-     *
-     * Failures are logged and swallowed so the dashboard render path is never
-     * blocked or broken by telemetry issues.
-     *
-     * @api
-     */
-    public function sendAnonymousTelemetry(): void
-    {
-        try {
-            $promise = $this->reportService->sendAnonymousTelemetry();
-            if ($promise !== false) {
-                $promise->wait();
-            }
-        } catch (\Exception $e) {
-            Log::error($e);
-        }
-    }
 
     /**
      * Aggregates all data the Welcome widget needs into a single array.

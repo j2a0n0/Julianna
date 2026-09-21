@@ -1035,7 +1035,7 @@
             // Show loading state
             uploadOption.innerHTML = '<span class="tiptap-image-popover__loading">Uploading...</span>';
 
-            // Upload to Leantime API
+            // Upload through the Julianna file API
             var formData = new FormData();
             formData.append('file', file);
 

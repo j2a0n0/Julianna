@@ -29,7 +29,7 @@ class AuthUserSessionRoleTest extends \Unit\TestCase
         return [
             'id' => 1,
             'firstname' => 'Test',
-            'username' => 'test@leantime.io',
+            'username' => 'test@julianna.test',
             'profileId' => 0,
             'clientId' => 0,
             'role' => $role,

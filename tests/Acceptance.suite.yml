@@ -9,10 +9,10 @@ modules:
   enabled:
     - \Tests\Support\Helper\Acceptance
     - REST:
-        url: 'https://leantime-dev'
+        url: 'https://julianna-dev'
         depends: PhpBrowser
     - WebDriver:
-        url: 'https://leantime-dev'
+        url: 'https://julianna-dev'
         host: selenium
         browser: chrome
         wait: 20
@@ -23,9 +23,9 @@ modules:
           goog:chromeOptions:
             args: [ "--headless" ]
     - Db:
-        dsn: "mysql:host=leantime-db;port=3306;dbname=leantime_test"
+        dsn: "mysql:host=julianna-db;port=3306;dbname=julianna_test"
         user: root
-        password: leantime
+        password: julianna
         populate: true
         cleanup: true
 

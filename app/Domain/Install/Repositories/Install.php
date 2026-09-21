@@ -169,7 +169,7 @@ class Install
                     'charset' => 'utf8',
                     'prefix' => '',
                     'search_path' => 'public',
-                    'sslmode' => env('LEAN_DB_SSLMODE', 'prefer'),
+                    'sslmode' => env('JULIANNA_DB_SSLMODE', 'prefer'),
                     'options' => [
                         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     ],
@@ -796,8 +796,6 @@ class Install
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
                 INSERT INTO zp_settings (`key`, `value`) VALUES ('db-version', :dbVersion);
-                INSERT INTO zp_settings (`key`, `value`) VALUES ('companysettings.telemetry.active', 'true');
-
                 CREATE TABLE `zp_audit` (
                     `id` INT NOT NULL AUTO_INCREMENT,
                     `userId` INT NULL,
@@ -1229,29 +1227,11 @@ class Install
         }
     }
 
-    private function update_sql_20107(): bool|array
+    private function update_sql_20107(): bool
     {
-        $errors = [];
-
-        $sql = [
-            "INSERT INTO zp_settings (`key`, `value`) VALUES ('companysettings.telemetry.active', 'true')",
-        ];
-
-        foreach ($sql as $statement) {
-            try {
-                $this->connection->statement($statement);
-            } catch (\Exception $e) {
-                Log::error($statement.' Failed:'.$e->getMessage());
-                Log::error($e);
-                array_push($errors, $statement.' Failed:'.$e->getMessage());
-            }
-        }
-
-        if (count($errors) > 0) {
-            return $errors;
-        } else {
-            return true;
-        }
+        // Historical upstream migration retained as an intentional no-op.
+        // Julianna has no product telemetry setting or runtime.
+        return true;
     }
 
     private function update_sql_20108(): bool|array

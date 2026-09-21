@@ -135,7 +135,9 @@ class EditUser extends Controller
     {
         $result = $this->userService->resendUserInvite($id, $row);
 
-        if ($result === 'too_soon') {
+        if ($result === 'disabled') {
+            $this->tpl->setNotification('notifications.use_signup_approval', 'info');
+        } elseif ($result === 'too_soon') {
             $this->tpl->setNotification($this->language->__('notification.invite_too_soon'), 'error');
         } elseif ($result === 'too_many_invites') {
             $this->tpl->setNotification($this->language->__('notification.too_many_invites'), 'error');
@@ -206,7 +208,7 @@ class EditUser extends Controller
             'id' => $row['id'],
             'firstname' => $_POST['firstname'] ?? $row['firstname'],
             'lastname' => $_POST['lastname'] ?? $row['lastname'],
-            'user' => $_POST['user'] ?? $row['username'],
+            'user' => $row['username'],
             'phone' => $_POST['phone'] ?? $row['phone'],
             'status' => $_POST['status'] ?? $row['status'],
             'role' => $_POST['role'] ?? $row['role'],

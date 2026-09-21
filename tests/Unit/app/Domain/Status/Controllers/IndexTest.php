@@ -11,15 +11,13 @@ use Leantime\Core\Configuration\Environment;
 use Leantime\Core\Http\IncomingRequest;
 use Leantime\Core\Language;
 use Leantime\Core\UI\Template;
-use Leantime\Domain\Plugins\Services\Plugins;
 use Leantime\Domain\Status\Controllers\Index;
 
 /**
  * Unit tests for the public /status discovery endpoint.
  *
- * Pins the contract the mobile app relies on (authMethods + oidcLoginUrl drive
- * whether the SSO button appears) AND the security tier: the unauthenticated
- * response must NEVER leak a plugin/version inventory.
+ * Pins Julianna's local-password-plus-MFA discovery contract and the security
+ * tier: the unauthenticated response must NEVER leak plugin/version inventory.
  */
 class IndexTest extends \Unit\TestCase
 {
@@ -42,19 +40,12 @@ class IndexTest extends \Unit\TestCase
         $env = new Environment;
         $env->set('oidcEnable', $overrides['oidcEnable'] ?? false);
         $env->set('useLdap', $overrides['useLdap'] ?? false);
-        $env->set('sitename', $overrides['sitename'] ?? 'Leantime');
+        $env->set('sitename', $overrides['sitename'] ?? 'Julianna');
 
-        $request = IncomingRequest::create('https://demo.leantime.io/status', 'GET');
+        $request = IncomingRequest::create('https://julianna.example/status', 'GET');
         $this->app->instance(IncomingRequest::class, $request);
         $this->app->instance(Environment::class, $env);
         $this->app->instance(AppSettings::class, new AppSettings);
-
-        // Mobile-auth advertising is gated on AdvancedAuth; mock it installed so
-        // these contract tests cover a mobile-capable instance. The gate itself
-        // is verified live e2e (AdvancedAuth off -> mobile OIDC not advertised).
-        $plugins = $this->createMock(Plugins::class);
-        $plugins->method('isEnabled')->willReturn(true);
-        $this->app->instance(Plugins::class, $plugins);
 
         return new Index($request, $this->createMock(Template::class), $this->createMock(Language::class));
     }
@@ -73,16 +64,18 @@ class IndexTest extends \Unit\TestCase
         $this->assertSame(['password'], $body['authMethods']);
         $this->assertArrayNotHasKey('oidcLoginUrl', $body);
         $this->assertSame('Acme', $body['instanceName']);
-        $this->assertTrue($body['mobileAuthEnabled']);
+        $this->assertFalse($body['mobileAuthEnabled']);
+        $this->assertTrue($body['mfaRequired']);
+        $this->assertSame([], $body['ssoProviders']);
     }
 
-    public function test_oidc_enabled_advertises_oidc_and_login_url(): void
+    public function test_legacy_oidc_configuration_cannot_reenable_oidc(): void
     {
         $response = $this->makeController(['oidcEnable' => true, 'useLdap' => false, 'sitename' => 'Acme'])->get([]);
         $body = $this->bodyOf($response);
 
-        $this->assertContains('oidc', $body['authMethods']);
-        $this->assertSame('https://demo.leantime.io/oidc/login', $body['oidcLoginUrl']);
+        $this->assertSame(['password'], $body['authMethods']);
+        $this->assertArrayNotHasKey('oidcLoginUrl', $body);
     }
 
     public function test_response_never_leaks_a_plugin_or_version_inventory(): void

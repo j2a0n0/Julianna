@@ -39,6 +39,9 @@ final class UsersPermissions implements ProvidesPermissions
     /** Bulk-import accounts from a directory (LDAP). */
     public const IMPORT = 'users.import';
 
+    /** Approve or reject a verified self-registration request. */
+    public const APPROVE = 'users.approve';
+
     public function domain(): string
     {
         return 'users';
@@ -52,6 +55,7 @@ final class UsersPermissions implements ProvidesPermissions
             new Permission(self::EDIT, 'Edit users', false),
             new Permission(self::DELETE, 'Delete users', false),
             new Permission(self::IMPORT, 'Import users (LDAP)', false),
+            new Permission(self::APPROVE, 'Approve signup requests', false),
         ];
     }
 }

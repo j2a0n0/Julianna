@@ -3,7 +3,7 @@
 <head>
     @include('global::sections.header')
     <style>
-        .leantimeLogo { position: fixed; bottom: 10px; right: 10px; }
+        .juliannaLogo { position: fixed; bottom: 10px; right: 10px; }
     </style>
     @stack('styles')
 </head>
@@ -25,7 +25,7 @@
 
         <div class="welcomeContent">
                 <h1 class="mainWelcome">
-                    Oops, something is off.
+                    {{ __('headlines.something_is_off') }}
                 </h1>
         </div>
     </div>
@@ -43,8 +43,8 @@
         </div>
 
     </div>
-    <div class="leantimeLogo">
-        <img style="height: 25px;" src="{!! BASE_URL !!}/dist/images/logo-powered-by-leantime.png">
+    <div class="juliannaLogo">
+        <img style="height: 25px;" src="{!! BASE_URL !!}/dist/images/logo-powered-by-julianna.svg" alt="Powered by Julianna">
     </div>
 </div>
 

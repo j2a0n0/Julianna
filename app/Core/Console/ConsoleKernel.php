@@ -40,7 +40,7 @@ class ConsoleKernel extends Kernel implements ConsoleKernelContract
     public function __construct(Application $app, Dispatcher $events)
     {
         if (! defined('ARTISAN_BINARY')) {
-            define('ARTISAN_BINARY', 'bin/leantime');
+            define('ARTISAN_BINARY', 'bin/julianna');
         }
 
         parent::__construct($app, $events);
@@ -119,7 +119,7 @@ class ConsoleKernel extends Kernel implements ConsoleKernelContract
             $this->load($path);
         }
 
-        // Load Dynamic command paths for leantime
+        // Load dynamic Julianna domain command paths.
         $ltCommands = collect(glob(APP_ROOT.'/app/Domain/**/Command/'));
 
         // Load commands from enabled plugins
@@ -206,7 +206,7 @@ class ConsoleKernel extends Kernel implements ConsoleKernelContract
     {
 
         if ($domain) {
-            putenv('LEAN_APP_URL='.$domain);
+            putenv('JULIANNA_APP_URL='.$domain);
             putenv('APP_URL='.$domain);
 
             // When calling commands inside the app we can switch domains

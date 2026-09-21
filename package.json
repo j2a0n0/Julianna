@@ -1,7 +1,7 @@
 {
-  "name": "leantime",
-  "version": "3.9.8",
-  "description": "Open source innovation management system",
+  "name": "julianna",
+  "version": "1.0.0-dev",
+  "description": "Self-hosted project and work management for focused teams",
   "dependencies": {
     "@assuradeurengilde/fontawesome-iconpicker": "^3.2.3",
     "@fortawesome/fontawesome-free": "^6.5.2",
@@ -96,10 +96,10 @@
     "webpack": "^5.105.2",
     "webpack-cli": "^7.0.3"
   },
-  "scripts": {},
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Leantime/leantime"
+  "scripts": {
+    "development": "mix",
+    "production": "mix --production && node generateBlocklist.mjs",
+    "release:scan": "bash scripts/check-independent-release.sh"
   },
   "keywords": [
     "Project",
@@ -108,9 +108,8 @@
     "Sprint",
     "Lean"
   ],
-  "author": "Marcel Folaron",
+  "author": "Julianna contributors",
   "license": "AGPL-3.0",
-  "homepage": "https://github.com/Leantime/leantime/blob/master/README.md",
   "engines": {
     "node": ">=18"
   },

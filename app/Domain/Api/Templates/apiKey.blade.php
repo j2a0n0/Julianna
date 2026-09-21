@@ -18,7 +18,7 @@
                 <h4 class="widgettitle title-light">{!! __('label.basic_information') !!}</h4>
 
                 <label>{!! __('label.key') !!}</label><div class="clearfix"></div>
-                lt_{{ substr($values['user'], 0, 5) }}***<br /><br />
+                jul_{{ substr($values['user'], 0, 5) }}***<br /><br />
 
                 <label for="firstname">{!! __('label.key_name') !!}</label><div class="clearfix"></div>
                     <x-global::forms.text-input

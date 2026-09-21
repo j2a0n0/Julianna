@@ -59,7 +59,7 @@
 
     // Preset name for the picker button — matches what the user selects in the
     // dropdown ("Last quarter" / "This quarter" / "Next quarter"). Deliberately
-    // NOT "Q2 2026" — Leantime doesn't let companies define fiscal quarters, so
+    // NOT "Q2 2026" — Julianna doesn't let companies define fiscal quarters, so
     // a calendar Q# label would be a lie for anyone whose fiscal year isn't
     // calendar-aligned. The literal date range is shown next to it.
     $presetName = match ($period->preset) {

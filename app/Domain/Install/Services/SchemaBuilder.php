@@ -62,6 +62,7 @@ class SchemaBuilder
         $this->createRolesTable();
         $this->createPermissionsTable();
         $this->createRolePermissionsTable();
+        $this->createJuliannaAuthTables();
     }
 
     /**
@@ -113,10 +114,39 @@ class SchemaBuilder
             'pwReset' => $pwReset,
         ]);
 
+        // Julianna owns credentials independently from the legacy application
+        // user table. The installer token doubles as the first owner's
+        // short-lived password-setup token; only its SHA-256 digest is stored.
+        $now = now();
+        $accountId = DB::table('julianna_auth_accounts')->insertGetId([
+            'user_id' => 1,
+            'email_normalized' => mb_strtolower(trim($values['email']), 'UTF-8'),
+            'display_name' => trim($values['firstname'].' '.$values['lastname']),
+            'password_hash' => password_hash(bin2hex(random_bytes(32)), PASSWORD_ARGON2ID),
+            'state' => 'active',
+            'email_verified_at' => $now,
+            'approved_at' => $now,
+            'approved_by_user_id' => 1,
+            'rejected_at' => null,
+            'disabled_at' => null,
+            'mfa_confirmed_at' => null,
+            'password_changed_at' => null,
+            'session_version' => 1,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        DB::table('julianna_auth_tokens')->insert([
+            'account_id' => $accountId,
+            'purpose' => 'password_reset',
+            'token_hash' => hash('sha256', $pwReset),
+            'expires_at' => $now->copy()->addHours(24),
+            'consumed_at' => null,
+            'created_at' => $now,
+        ]);
+
         // Insert initial settings
         DB::table('zp_settings')->insert([
             ['key' => 'db-version', 'value' => $this->appSettings->dbVersion],
-            ['key' => 'companysettings.telemetry.active', 'value' => 'true'],
         ]);
 
         // zp_clients and zp_user are seeded with explicit id = 1 above. MySQL
@@ -1010,6 +1040,96 @@ class SchemaBuilder
             // checks in application code, so a race can't insert a duplicate mapping
             // for the same source element → target structure.
             $table->unique(['source_structure_id', 'source_element_id', 'target_structure_id'], 'idx_wsm_unique_mapping');
+        });
+    }
+
+    /**
+     * Create Julianna's independent identity store. No foreign keys are used so
+     * the tables remain compatible with the legacy schema's cross-database
+     * conventions and its existing account-deletion behavior.
+     */
+    private function createJuliannaAuthTables(): void
+    {
+        Schema::create('julianna_auth_accounts', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->string('email_normalized', 254);
+            $table->string('display_name', 200);
+            $table->string('password_hash', 255);
+            $table->string('state', 32);
+            $table->dateTime('email_verified_at')->nullable();
+            $table->dateTime('approved_at')->nullable();
+            $table->unsignedBigInteger('approved_by_user_id')->nullable();
+            $table->dateTime('rejected_at')->nullable();
+            $table->dateTime('disabled_at')->nullable();
+            $table->dateTime('mfa_confirmed_at')->nullable();
+            $table->dateTime('password_changed_at')->nullable();
+            $table->unsignedInteger('session_version')->default(1);
+            $table->dateTime('created_at');
+            $table->dateTime('updated_at');
+
+            $table->unique(['email_normalized'], 'jau_accounts_email_unique');
+            $table->unique(['user_id'], 'jau_accounts_user_unique');
+            $table->index(['state', 'created_at'], 'jau_accounts_state_created');
+        });
+
+        Schema::create('julianna_auth_tokens', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('account_id');
+            $table->string('purpose', 32);
+            $table->char('token_hash', 64);
+            $table->dateTime('expires_at');
+            $table->dateTime('consumed_at')->nullable();
+            $table->dateTime('created_at');
+
+            $table->unique(['token_hash'], 'jau_tokens_hash_unique');
+            $table->index(['account_id', 'purpose', 'consumed_at'], 'jau_tokens_account_purpose');
+            $table->index(['expires_at'], 'jau_tokens_expires');
+        });
+
+        Schema::create('julianna_auth_mfa', function (Blueprint $table) {
+            $table->unsignedBigInteger('account_id')->primary();
+            $table->text('encrypted_secret');
+            $table->dateTime('confirmed_at')->nullable();
+            $table->dateTime('created_at');
+            $table->dateTime('updated_at');
+        });
+
+        Schema::create('julianna_auth_recovery_codes', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('account_id');
+            $table->string('code_hash', 255);
+            $table->dateTime('consumed_at')->nullable();
+            $table->dateTime('created_at');
+
+            $table->index(['account_id', 'consumed_at'], 'jau_recovery_account_unused');
+        });
+
+        Schema::create('julianna_auth_audit_events', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('account_id')->nullable();
+            $table->unsignedBigInteger('actor_user_id')->nullable();
+            $table->string('event', 64);
+            $table->char('subject_identifier_hash', 64)->nullable();
+            $table->char('ip_hash', 64)->nullable();
+            $table->text('context')->nullable();
+            $table->dateTime('created_at');
+
+            $table->index(['account_id', 'created_at'], 'jau_audit_account_created');
+            $table->index(['event', 'created_at'], 'jau_audit_event_created');
+        });
+
+        Schema::create('julianna_auth_sessions', function (Blueprint $table) {
+            $table->char('session_hash', 64)->primary();
+            $table->unsignedBigInteger('account_id');
+            $table->unsignedInteger('session_version');
+            $table->dateTime('expires_at');
+            $table->dateTime('revoked_at')->nullable();
+            $table->dateTime('created_at');
+            $table->dateTime('last_seen_at');
+
+            $table->index(['account_id', 'revoked_at'], 'jau_sessions_account_active');
+            $table->index(['expires_at'], 'jau_sessions_expires');
         });
     }
 }

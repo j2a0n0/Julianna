@@ -359,8 +359,8 @@ class Projects extends BaseService implements ChecksProjectAccess
 
         // Send mobile push notifications to recipients with a registered
         // device token. No-op for users with no mobile token; no-op for
-        // FCM-provider rows when LEAN_PUSH_FCM_CREDENTIALS_PATH /
-        // LEAN_PUSH_FCM_PROJECT_ID aren't configured. Wrapped in try
+        // FCM-provider rows when JULIANNA_PUSH_FCM_CREDENTIALS_PATH /
+        // JULIANNA_PUSH_FCM_PROJECT_ID aren't configured. Wrapped in try
         // so a push outage never breaks the rest of the notification
         // dispatch path (queued emails + messengers still fire).
         try {

@@ -2,110 +2,24 @@
 
 namespace Leantime\Domain\Notifications\Services;
 
-use Illuminate\Support\Facades\Log;
-use Leantime\Domain\Setting\Services\Setting;
-
 /**
- * @api
+ * Compatibility stub for the removed upstream product-news integration.
+ * Project notifications remain local and are handled by Notifications.
  */
-class News
+final class News
 {
-    private Setting $settingService;
-
-    /**
-     * __construct - get database connection
-     *
-     *
-     * @api
-     */
-    public function __construct(
-        Setting $settingService
-    ) {
-        $this->settingService = $settingService;
-    }
-
-    public function getLatest(int $userId): false|\SimpleXMLElement
+    public function getLatest(int $userId): false
     {
-        if (! env('LEAN_NEWS_ENABLED', true)) {
-            return false;
-        }
-
-        try {
-            $rss = $this->getFeed();
-        } catch (\Exception $e) {
-            Log::warning('Could not connect to news server.');
-            Log::warning($e);
-
-            return false;
-        }
-
-        $latestGuid = (string) $rss->channel->item[0]->guid;
-        $this->settingService->saveSetting('usersettings.'.$userId.'.lastNewsGuid', strval($latestGuid));
-
-        // Todo: check last article the user read
-        // Only load rss feed once a day
-        return $rss;
-
+        return false;
     }
 
     public function hasNews(int $userId): bool
     {
-        if (! env('LEAN_NEWS_ENABLED', true)) {
-            return false;
-        }
-
-        try {
-            $rss = $this->getFeed();
-        } catch (\Exception $e) {
-            Log::warning('Could not connect to news server.');
-            Log::warning($e);
-
-            return false;
-        }
-
-        $latestGuid = (string) $rss->channel->item[0]->guid;
-
-        $lastNewsGuid = $this->settingService->getSetting('usersettings.'.$userId.'.lastNewsGuid');
-
-        if ($lastNewsGuid === false) {
-            return true;
-        }
-
-        if ($lastNewsGuid !== $latestGuid) {
-            return true;
-        }
-
         return false;
-
     }
 
-    /**
-     * getFeed - Fetches the feed from a remote URL and returns the contents as a SimpleXMLElement object
-     *
-     * @return \SimpleXMLElement - The parsed XML content as a SimpleXMLElement object
-     *
-     * @throws \Exception - If the simplexml_load_string function doesn't exist
-     *
-     * @api
-     */
-    public function getFeed()
+    public function getFeed(): false
     {
-
-        $client = new \GuzzleHttp\Client;
-        $response = $client->request('GET', 'https://leantime.io/category/leantime-updates/feature-updates/feed/', [
-            'headers' => ['Accept' => 'application/xml'],
-            // Fail fast when the server (or CI runner) has no egress so the news
-            // badge/widget degrades quickly instead of stalling. (#3372/#3373)
-            'connect_timeout' => 2,
-            'timeout' => 5,
-        ])->getBody()->getContents();
-
-        if (function_exists('simplexml_load_string')) {
-            $responseXml = simplexml_load_string($response);
-        } else {
-            throw new \Exception('Simple XML extension is not installed');
-        }
-
-        return $responseXml;
+        return false;
     }
 }

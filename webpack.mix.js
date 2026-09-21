@@ -1,7 +1,7 @@
 const pjson = require('./package.json');
 const glob = require('glob');
 const path = require('path');
-const version = pjson.version;
+const version = process.env.JULIANNA_VERSION || pjson.version;
 
 const fs = require("fs");
 
@@ -133,9 +133,6 @@ getFilesRecursive('app/Domain', '.js').forEach(file => {
     .combine([
         './public/assets/js/app/core/tiptap/extensions/toolbar.js'
     ], `public/dist/js/compiled-tiptap-toolbar.${version}.min.js`)
-    .combine([
-        './public/assets/js/app/core/tiptap/test-utils.js'
-    ], `public/dist/js/compiled-tiptap-tests.${version}.min.js`)
     .combine([
         "./public/assets/js/libs/simpleGantt/snap.svg-min.js",
         "./public/assets/js/libs/simpleGantt/frappe-gantt.js",

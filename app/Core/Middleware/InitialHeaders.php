@@ -25,11 +25,16 @@ class InitialHeaders
 
         // Content Security Policy
         $cspParts = [
-            "default-src 'self' 'unsafe-inline'",
-            "base-uri 'self';",
-            "script-src 'self' 'unsafe-inline' unpkg.com",
-            "font-src 'self'  data: unpkg.com",
-            "img-src * 'self' *.leantime.io *.amazonaws.com data: blob: marketplace.localhost",
+            "default-src 'self'",
+            "base-uri 'self'",
+            "form-action 'self'",
+            "frame-ancestors 'none'",
+            "object-src 'none'",
+            "script-src 'self' 'unsafe-inline'",
+            "style-src 'self' 'unsafe-inline'",
+            "font-src 'self' data:",
+            "img-src 'self' https: data: blob:",
+            "connect-src 'self' https: wss:",
             // Allow all embed providers supported by the TipTap embed extension.
             // Each entry corresponds to one or more embed types in embed.js.
             "frame-src 'self'"
@@ -45,14 +50,16 @@ class InitialHeaders
                 .' calendly.com'                          // calendly
                 .' codepen.io'                            // codepen
                 .' *.codesandbox.io',                     // codesandbox
-            "frame-ancestors 'self' *.google.com *.microsoft.com *.live.com",
+            "media-src 'self' blob: https:",
+            "worker-src 'self' blob:",
+            "manifest-src 'self'",
         ];
         $cspParts = self::dispatchFilter('cspParts', $cspParts);
         $csp = implode(';', $cspParts);
 
         foreach (
             self::dispatchFilter('headers', [
-                'X-Frame-Options' => 'SAMEORIGIN',
+                'X-Frame-Options' => 'DENY',
                 'X-XSS-Protection' => '1; mode=block',
                 'X-Content-Type-Options' => 'nosniff',
                 'Referrer-Policy' => 'same-origin',
@@ -69,7 +76,7 @@ class InitialHeaders
             $response->headers->set($key, $value);
         }
 
-        if ($request->isSecure() || env('LEAN_HSTS_ENABLED', false)) {
+        if ($request->isSecure() || env('JULIANNA_HSTS_ENABLED', false)) {
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
 

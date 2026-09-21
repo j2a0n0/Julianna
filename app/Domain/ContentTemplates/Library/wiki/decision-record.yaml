@@ -4,7 +4,7 @@ description: "Capture a single decision with its context, options weighed, and c
 appliesTo: "wiki"
 sector: "process"
 icon: "fa-gavel"
-author: "Leantime"
+author: "Julianna"
 version: "1.0.0"
 license: "CC0"
 

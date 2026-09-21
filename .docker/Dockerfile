@@ -1,131 +1,168 @@
-# Build stage
-FROM --platform=$TARGETPLATFORM php:8.3-fpm-alpine AS builder
+# syntax=docker/dockerfile:1.7
 
-# Add QEMU for cross-platform builds
-COPY --from=tonistiigi/binfmt:latest /usr/bin/qemu-* /usr/bin/
+# Julianna is built only from the source in this repository. No release archive
+# or application image from the upstream project is downloaded or inherited.
 
-# Install build dependencies
+FROM node:22-alpine@sha256:b6f26b36c8ff49624cfdac716b8ea1138d606df02586a77d364bb5536a634f85 AS frontend
+
+ARG JULIANNA_VERSION=1.0.0-dev
+WORKDIR /build
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY . .
+RUN JULIANNA_VERSION="${JULIANNA_VERSION}" npx mix --production \
+    && node generateBlocklist.mjs
+
+
+FROM php:8.3-fpm-alpine@sha256:4574194a55e413b8eb799f4ac79233e5b7c3be30d49a7df62cf37187186fe659 AS php-build
+
 RUN apk add --no-cache --virtual .build-deps \
-    $PHPIZE_DEPS \
-    gcc \
-    g++ \
-    openssl-dev \
-    make \
-    libxml2-dev \
-    oniguruma-dev \
-    openldap-dev \
-    zstd-dev \
-    libzip-dev \
-    freetype-dev \
-    libpng-dev \
-    libjpeg-turbo-dev \
-    postgresql-dev
+        $PHPIZE_DEPS \
+        freetype-dev \
+        libjpeg-turbo-dev \
+        libpng-dev \
+        libxml2-dev \
+        libzip-dev \
+        linux-headers \
+        oniguruma-dev \
+        openldap-dev \
+        postgresql-dev \
+        zstd-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j"$(getconf _NPROCESSORS_ONLN)" \
+        bcmath \
+        dom \
+        exif \
+        fileinfo \
+        gd \
+        ldap \
+        mbstring \
+        mysqli \
+        opcache \
+        pcntl \
+        pdo_mysql \
+        pdo_pgsql \
+        simplexml \
+        zip \
+    && pecl install redis \
+    && docker-php-ext-enable redis
 
-# Set cross-compilation flags if needed
-ARG TARGETPLATFORM
-RUN case "${TARGETPLATFORM}" in \
-        linux/arm64*) export CFLAGS='-march=armv8-a' CXXFLAGS='-march=armv8-a' ;; \
-    esac
-
-# Install and configure PHP extensions
-RUN set -ex; \
-    # Configure extensions
-    docker-php-ext-configure gd --with-freetype --with-jpeg; \
-    # Install extensions one by one to prevent memory issues
-    docker-php-ext-install mysqli && \
-    docker-php-ext-install pdo_mysql && \
-    docker-php-ext-install pdo_pgsql && \
-    docker-php-ext-install bcmath && \
-    docker-php-ext-install mbstring && \
-    docker-php-ext-install exif && \
-    docker-php-ext-install pcntl && \
-    docker-php-ext-install opcache && \
-    docker-php-ext-install ldap && \
-    docker-php-ext-install zip && \
-    pecl install redis && docker-php-ext-enable redis && \
-    docker-php-ext-install gd && \
-    rm -rf /tmp/* /var/cache/apk/*
+COPY --from=composer:2@sha256:a5f59b9fd2faf31218632be4809dc6491761085e8064c31dc3b84378c48c248b /usr/bin/composer /usr/local/bin/composer
+WORKDIR /build
+COPY composer.json composer.lock ./
+COPY app ./app
+RUN composer install \
+        --no-dev \
+        --no-interaction \
+        --no-progress \
+        --no-scripts \
+        --optimize-autoloader \
+        --prefer-dist \
+    && composer check-platform-reqs
 
 
+FROM php:8.3-fpm-alpine@sha256:4574194a55e413b8eb799f4ac79233e5b7c3be30d49a7df62cf37187186fe659 AS runtime
 
-# Production stage
-FROM --platform=$TARGETPLATFORM php:8.3-fpm-alpine
-
-# Add production dependencies
-RUN apk add --no-cache \
-    tini \
-    nginx \
-    mysql-client \
-    openssl \
-    supervisor \
-    freetype \
-    libpng \
-    zstd-libs \
-    libjpeg-turbo \
-    libzip \
-    openldap \
-    libpq \
-    icu-libs && \
-    rm -rf /var/cache/apk/* /tmp/*
-
-# Copy built extensions from builder
-COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
-COPY --from=builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
-
-# Add non-root user
 ARG PUID=1000
 ARG PGID=1000
+ARG JULIANNA_VERSION=1.0.0-dev
+ARG JULIANNA_COMMIT=unknown
+ARG JULIANNA_SOURCE_URL=""
 
-# Set working directory
+LABEL org.opencontainers.image.title="Julianna" \
+      org.opencontainers.image.description="Independent self-hosted project and work management" \
+      org.opencontainers.image.version="${JULIANNA_VERSION}" \
+      org.opencontainers.image.revision="${JULIANNA_COMMIT}" \
+      org.opencontainers.image.source="${JULIANNA_SOURCE_URL}" \
+      org.opencontainers.image.licenses="AGPL-3.0-only"
+
+ENV JULIANNA_VERSION="${JULIANNA_VERSION}" \
+    JULIANNA_COMMIT="${JULIANNA_COMMIT}" \
+    JULIANNA_SOURCE_URL="${JULIANNA_SOURCE_URL}"
+
+RUN apk add --no-cache \
+        curl \
+        freetype \
+        icu-libs \
+        libjpeg-turbo \
+        libpng \
+        libpq \
+        libzip \
+        mysql-client \
+        nginx \
+        openldap \
+        openssl \
+        supervisor \
+        tini \
+        zstd-libs \
+    && rm -rf /var/cache/apk/* /tmp/*
+
+COPY --from=php-build /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
+COPY --from=php-build /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
+
+RUN deluser www-data \
+    && addgroup -g "${PGID}" www-data \
+    && adduser -u "${PUID}" -G www-data -h /home/www-data -s /bin/sh -D www-data
+
 WORKDIR /var/www/html
+COPY app ./app
+COPY bin ./bin
+COPY bootstrap ./bootstrap
+COPY config ./config
+COPY database ./database
+COPY public ./public
+COPY composer.json composer.lock LICENSE NOTICE.md index.php ./
+COPY --from=php-build /build/vendor ./vendor
+COPY --from=frontend /build/public/dist ./public/dist
+COPY --from=frontend /build/blocklist.json ./blocklist.json
 
-# Install Leantime
-ARG LEAN_VERSION
-RUN set -ex; \
-    curl -fsSL --retry 3 https://github.com/Leantime/leantime/releases/download/v${LEAN_VERSION}/Leantime-v${LEAN_VERSION}.tar.gz -o leantime.tar.gz && \
-    tar xzf leantime.tar.gz --strip-components 1 && \
-    rm leantime.tar.gz && \
-    chown -R www-data:www-data .
+RUN mkdir -p \
+        app/Plugins \
+        backupdb \
+        bootstrap/cache \
+        public/userfiles \
+        storage/framework/cache \
+        storage/framework/sessions \
+        storage/framework/views \
+        storage/logs \
+        userfiles \
+        /run \
+        /var/lib/nginx \
+        /var/log/nginx \
+    && chown root:root /var/www/html \
+    && chmod 0755 /var/www/html \
+    && chown -R www-data:www-data \
+        /var/www/html/app/Plugins \
+        /var/www/html/backupdb \
+        /var/www/html/bootstrap/cache \
+        /var/www/html/public/userfiles \
+        /var/www/html/storage \
+        /var/www/html/userfiles \
+        /run \
+        /var/lib/nginx \
+        /var/log/nginx \
+    && chmod 775 \
+        app/Plugins \
+        backupdb \
+        bootstrap/cache \
+        public/userfiles \
+        storage \
+        storage/framework/cache \
+        storage/framework/sessions \
+        storage/framework/views \
+        storage/logs \
+        userfiles
 
-# Set Permissions
-RUN set -ex; \
-    # Modify existing www-data user/group
-    deluser www-data; \
-    addgroup -g ${PGID} www-data; \
-    adduser -u ${PUID} -G www-data -h /home/www-data -s /bin/sh -D www-data; \
-    # Create required directories
-    mkdir -p /var/www/html/userfiles \
-            /var/www/html/public/userfiles \
-            /var/www/html/bootstrap/cache \
-            /var/www/html/storage/logs \
-            /var/www/html/storage/framework/cache \
-            /var/www/html/storage/framework/sessions \
-            /var/www/html/storage/framework/views \
-            /var/www/html/app/Plugins \
-            /run /var/log/nginx /var/lib/nginx; \
-    chown -R www-data:www-data /var/www/html /run /var/log/nginx /var/lib/nginx && \
-    chmod 775 /var/www/html/userfiles \
-               /var/www/html/public/userfiles \
-               /var/www/html/bootstrap/cache \
-               /var/www/html/storage/logs \
-               /var/www/html/storage/framework/cache \
-               /var/www/html/storage/framework/sessions \
-               /var/www/html/storage/framework/views \
-               /var/www/html/app/Plugins;
+COPY .docker/config/custom.ini /usr/local/etc/php/conf.d/99-julianna.ini
+COPY .docker/config/nginx.conf /etc/nginx/nginx.conf
+COPY .docker/config/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
+COPY .docker/config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY --chmod=0755 .docker/start.sh /start.sh
 
-# Copy configuration files
-COPY config/custom.ini /usr/local/etc/php/conf.d/
-COPY config/nginx.conf /etc/nginx/nginx.conf
-COPY config/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
-COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY --chmod=0755 start.sh /start.sh
-
-# Switch to non-root user
 USER www-data
 
-# Add healthcheck
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-    CMD curl -f http://localhost:8080 || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl --fail --silent --show-error http://127.0.0.1:8080/status || exit 1
 
 EXPOSE 8080
 ENTRYPOINT ["/sbin/tini", "--", "/start.sh"]

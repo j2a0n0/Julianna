@@ -21,6 +21,9 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class Language
 {
+    /** @var list<string> */
+    public const SUPPORTED_LANGUAGES = ['en-US', 'fr-CH'];
+
     use DispatchesEvents;
 
     /**
@@ -144,31 +147,36 @@ class Language
     public function getCurrentLanguage(): string
     {
 
-        if (session()->has('usersettings.language')) {
-            $this->language = session('usersettings.language');
+        $candidates = [
+            session('usersettings.language'),
+            $_COOKIE['language'] ?? null,
+            session('companysettings.language'),
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_string($candidate) && $this->isValidLanguage($candidate)) {
+                $this->language = $candidate;
+
+                return $this->language;
+            }
+        }
+
+        // Browser language headers commonly contain a bare primary language
+        // (for example `fr`) rather than Julianna's complete catalog code.
+        $browserLanguage = strtolower(substr(str_replace('_', '-', (string) ($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '')), 0, 2));
+        $mappedLanguage = match ($browserLanguage) {
+            'fr' => 'fr-CH',
+            'en' => 'en-US',
+            default => null,
+        };
+        if ($mappedLanguage !== null && $this->isValidLanguage($mappedLanguage)) {
+            $this->language = $mappedLanguage;
 
             return $this->language;
         }
 
-        if (isset($_COOKIE['language'])) {
-            $this->language = $_COOKIE['language'];
-
-            return $this->language;
-        }
-
-        if (session('companysettings.language')) {
-            $this->language = session('companysettings.language');
-
-            return $this->language;
-        }
-
-        $language = substr($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? 'en-US', 0, 2);
-        $language = str_replace('_', '-', $language);
-        if ($language && $this->isValidLanguage($language)) {
-            return $this->language;
-        }
-
-        $this->language = $this->config->language;
+        $configuredLanguage = (string) $this->config->language;
+        $this->language = $this->isValidLanguage($configuredLanguage) ? $configuredLanguage : 'en-US';
 
         return $this->language;
     }
@@ -181,7 +189,8 @@ class Language
      */
     public function isValidLanguage(string $langCode): bool
     {
-        return isset($this->langlist[$langCode]);
+        return in_array($langCode, self::SUPPORTED_LANGUAGES, true)
+            && isset($this->langlist[$langCode]);
     }
 
     /**
@@ -307,7 +316,16 @@ class Language
             );
         }
 
+        // Julianna 1.0 intentionally ships and verifies only these catalogs.
+        // Keeping unsupported upstream entries in the selector would expose a
+        // partially branded and untested interface.
+        $langlist = is_array($langlist)
+            ? array_intersect_key($langlist, array_flip(self::SUPPORTED_LANGUAGES))
+            : [];
         $parsedLangList = self::dispatchFilter('languages', $langlist);
+        $parsedLangList = is_array($parsedLangList)
+            ? array_intersect_key($parsedLangList, array_flip(self::SUPPORTED_LANGUAGES))
+            : [];
         Cache::store('installation')->set('languages.langlist', $parsedLangList);
 
         return $parsedLangList;

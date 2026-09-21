@@ -63,6 +63,7 @@ class HttpKernel extends Kernel
         // Enable globally only after all forms are tokenized. Until then, apply per-route.
         // \Leantime\Core\Middleware\VerifyCsrfToken::class,
 
+        \Leantime\Core\Middleware\ValidateJuliannaSession::class,
         \Leantime\Core\Middleware\AuthCheck::class,
         \Leantime\Core\Middleware\AuthenticateSession::class,
 
