@@ -24,6 +24,9 @@ docker compose --env-file .docker/.env -f .docker/docker-compose.yml up -d
 The resulting application image is named
 `julianna/app:${JULIANNA_VERSION}`. MySQL data, uploaded files, local plugins,
 and server-side sessions/logs are kept in named volumes.
+The app port binds to `127.0.0.1` by default. Keep that setting for a local
+install or a reverse proxy on this host; explicitly set
+`JULIANNA_BIND_ADDRESS` only when another network interface is intended.
 
 ## Production release requirements
 
