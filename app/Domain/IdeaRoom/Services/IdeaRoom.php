@@ -131,7 +131,9 @@ final class IdeaRoom
         return ($projectId === null ? $this->canCreateProject() : $this->permissions->currentUserCan(ProjectsPermissions::VIEW, $projectId))
             && ($projectId === null || (
                 $this->permissions->currentUserCan(GoalcanvasPermissions::CREATE, $projectId)
+                && $this->permissions->currentUserCan(GoalcanvasPermissions::EDIT, $projectId)
                 && $this->permissions->currentUserCan(TicketsPermissions::CREATE, $projectId)
+                && $this->permissions->currentUserCan(TicketsPermissions::EDIT, $projectId)
             ));
     }
 
