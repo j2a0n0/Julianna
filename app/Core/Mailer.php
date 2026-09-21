@@ -320,7 +320,12 @@ class Mailer
             foreach ($to as $recip) {
                 try {
                     $this->mailAgent->addAddress($recip);
-                    $this->mailAgent->send();
+                    if (! $this->mailAgent->send()) {
+                        Log::error('Julianna mail delivery failed', [
+                            'context' => isset($this->context) ? $this->context : '',
+                            'error' => $this->mailAgent->ErrorInfo,
+                        ]);
+                    }
                 } catch (Exception $e) {
                     Log::error($this->mailAgent->ErrorInfo);
                     Log::error($e);
