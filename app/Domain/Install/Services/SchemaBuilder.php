@@ -63,6 +63,7 @@ class SchemaBuilder
         $this->createPermissionsTable();
         $this->createRolePermissionsTable();
         $this->createJuliannaAuthTables();
+        $this->createIdeaRoomTables();
     }
 
     /**
@@ -1131,5 +1132,48 @@ class SchemaBuilder
             $table->index(['account_id', 'revoked_at'], 'jau_sessions_account_active');
             $table->index(['expires_at'], 'jau_sessions_expires');
         });
+    }
+
+    /**
+     * Create the Idea Room tables for fresh installations and upgrades. The
+     * guards let an interrupted upgrade safely create whichever table is still
+     * missing when it runs again.
+     */
+    public function createIdeaRoomTables(): void
+    {
+        if (! Schema::hasTable('julianna_idea_rooms')) {
+            Schema::create('julianna_idea_rooms', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('owner_user_id');
+                $table->unsignedBigInteger('project_id')->nullable();
+                $table->string('status', 32);
+                $table->string('title', 255);
+                $table->json('plan_json');
+                $table->unsignedBigInteger('approved_project_id')->nullable();
+                $table->unsignedBigInteger('approved_goal_id')->nullable();
+                $table->json('approval_result_json')->nullable();
+                $table->dateTime('created_at');
+                $table->dateTime('updated_at');
+                $table->dateTime('approved_at')->nullable();
+
+                $table->index(['owner_user_id', 'status', 'updated_at'], 'jir_owner_status_updated');
+                $table->index(['project_id', 'status'], 'jir_project_status');
+                $table->unique(['approved_goal_id'], 'jir_approved_goal_unique');
+            });
+        }
+
+        if (! Schema::hasTable('julianna_idea_messages')) {
+            Schema::create('julianna_idea_messages', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('room_id');
+                $table->string('role', 16);
+                $table->longText('content');
+                $table->dateTime('created_at');
+
+                $table->index(['room_id', 'id'], 'jim_room_id');
+                $table->foreign('room_id', 'jim_room_fk')
+                    ->references('id')->on('julianna_idea_rooms')->cascadeOnDelete();
+            });
+        }
     }
 }

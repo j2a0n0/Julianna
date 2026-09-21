@@ -13,5 +13,5 @@ class AppSettings
 
     public string $sourceUrl = '';
 
-    public string $dbVersion = '3.5.26';
+    public string $dbVersion = '3.5.27';
 }

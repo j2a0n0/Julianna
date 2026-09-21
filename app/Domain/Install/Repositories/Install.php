@@ -99,6 +99,7 @@ class Install
         30524,
         30525,
         30526,
+        30527,
     ];
 
     /**
@@ -3237,6 +3238,22 @@ class Install
             Log::error('Migration 30526: '.$e->getMessage());
 
             return ['Migration 30526 failed: '.$e->getMessage()];
+        }
+
+        return true;
+    }
+
+    /**
+     * Add persistent Idea Rooms and their resumable transcripts.
+     */
+    public function update_sql_30527(): bool|array
+    {
+        try {
+            app()->make(SchemaBuilder::class)->createIdeaRoomTables();
+        } catch (\Exception $e) {
+            Log::error('Migration 30527: '.$e->getMessage());
+
+            return ['Migration 30527 failed: '.$e->getMessage()];
         }
 
         return true;
