@@ -2,12 +2,12 @@
     jQuery(document).ready(function () {
 
         // First login flow
-        @if($isFirstLogin === true || $isFirstLogin === "true")
+        @if(($isFirstLogin ?? false) === true || ($isFirstLogin ?? false) === "true")
             leantime.helperController.firstLoginModal();
         @else
 
             // Returning user flow
-            @if(($isFirstLogin === false || $isFirstLogin === "false") && $showHelperModal === true)
+            @if((($isFirstLogin ?? false) === false || ($isFirstLogin ?? false) === "false") && ($showHelperModal ?? false) === true)
 
                 // Show the appropriate helper modal for the current page
                 @if(is_array($currentModal) && isset($currentModal['autoLoad']) && ($currentModal['autoLoad'] === true || $currentModal['autoLoad'] === "true"))

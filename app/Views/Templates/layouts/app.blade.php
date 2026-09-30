@@ -68,7 +68,9 @@
     @endif
     @include('global::sections.pageBottom')
     @stack('scripts')
-    @include('help::helpermodal')
+    @if ((int) session('userdata.id') > 0)
+        @include('help::helpermodal')
+    @endif
 </body>
 
 </html>
