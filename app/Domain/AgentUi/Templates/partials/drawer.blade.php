@@ -1,0 +1,8 @@
+<button type="button" class="julianna-agent-launcher" id="julianna-agent-launcher" aria-haspopup="dialog" aria-controls="julianna-agent-drawer" aria-expanded="false">✦ {{ __('agent_ui.open_assistant') }}</button>
+<div class="julianna-agent-scrim" id="julianna-agent-scrim" hidden></div>
+<aside class="julianna-agent-drawer" id="julianna-agent-drawer" role="dialog" aria-modal="true" aria-labelledby="julianna-agent-drawer-heading" data-base-url="{{ BASE_URL }}" hidden>
+    <header><h2 id="julianna-agent-drawer-heading">{{ __('agent_ui.drawer_heading') }}</h2><button type="button" class="agent-drawer-close" id="julianna-agent-close" aria-label="{{ __('agent_ui.close') }}">×</button></header>
+    <div class="agent-drawer-context"><label for="julianna-agent-scope">{{ __('agent_ui.scope') }}</label><select id="julianna-agent-scope"><option value="">{{ __('agent_ui.all_accessible') }}</option></select><span class="agent-drawer-page" id="julianna-agent-page"></span></div>
+    <div class="agent-drawer-turns" id="julianna-agent-turns" role="log" aria-live="polite"><p>{{ __('agent_ui.drawer_empty') }}</p></div>
+    <form class="agent-drawer-form" id="julianna-agent-form">@csrf<label for="julianna-agent-message" class="sr-only">{{ __('agent_ui.message_label') }}</label><textarea id="julianna-agent-message" maxlength="10000" required placeholder="{{ __('agent_ui.prompt') }}"></textarea><p class="agent-drawer-feedback" id="julianna-agent-feedback" role="alert" hidden></p><div class="agent-drawer-actions"><a href="{{ BASE_URL }}/agent">{{ __('agent_ui.open_command_center') }}</a><button type="submit" class="btn btn-primary">{{ __('agent_ui.send') }}</button></div></form>
+</aside>

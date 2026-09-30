@@ -1,15 +1,31 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Leantime\Core\Middleware\VerifyCsrfToken;
-use Leantime\Domain\IdeaRoom\Controllers\IdeaRoomController;
+declare(strict_types=1);
 
-Route::middleware([VerifyCsrfToken::class])->group(function (): void {
-    Route::get('/idea-room', [IdeaRoomController::class, 'index'])->name('idea-room.index');
-    Route::post('/idea-room', [IdeaRoomController::class, 'create'])->name('idea-room.create');
-    Route::post('/idea-room/{id}/messages', [IdeaRoomController::class, 'send'])->whereNumber('id');
-    Route::put('/idea-room/{id}/plan', [IdeaRoomController::class, 'savePlan'])->whereNumber('id');
-    Route::post('/idea-room/{id}/approve', [IdeaRoomController::class, 'approve'])->whereNumber('id');
-    Route::post('/idea-room/{id}/archive', [IdeaRoomController::class, 'archive'])->whereNumber('id');
-    Route::get('/idea-room/{id}', [IdeaRoomController::class, 'show'])->whereNumber('id')->name('idea-room.show');
-});
+use Illuminate\Support\Facades\Route;
+
+// Existing installations cache their domain directory list. Requiring the new
+// HTML route file here keeps /agent available immediately after an upgrade;
+// require_once prevents duplicate registration once the cache is refreshed.
+require_once APP_ROOT.'/app/Domain/AgentUi/routes.php';
+
+/*
+ * Idea Room is a preserved, read-only archive. The old agent, proposal,
+ * confirmation, canvas and chat mutation endpoints must never be executable
+ * after rollout, including when an old browser tab or MCP client retries.
+ */
+Route::get('/idea-room', static fn () => redirect(BASE_URL.'/agent/archive', 302));
+Route::get('/idea-room/projects/{projectId}/agent', static fn (int $projectId) => redirect(BASE_URL.'/agent/projects/'.$projectId, 302))
+    ->whereNumber('projectId');
+Route::get('/idea-room/{id}', static fn (int $id) => redirect(BASE_URL.'/agent/archive/'.$id, 302))
+    ->whereNumber('id');
+Route::get('/idea-room/{id}/graph', static fn (int $id) => redirect(BASE_URL.'/agent/archive/'.$id.'#archive-canvas-heading', 302))
+    ->whereNumber('id');
+Route::get('/idea-room/{id}/history', static fn (int $id) => redirect(BASE_URL.'/agent/archive/'.$id.'#archive-history-heading', 302))
+    ->whereNumber('id');
+
+$ideaRoomRetired = static fn () => response()->json([
+    'error' => 'Idea Room is now a read-only archive. Open /agent for new work.',
+], 410);
+Route::match(['POST', 'PUT', 'PATCH', 'DELETE'], '/idea-room', $ideaRoomRetired);
+Route::any('/idea-room/{legacy}', $ideaRoomRetired)->where('legacy', '.*');

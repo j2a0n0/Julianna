@@ -55,8 +55,10 @@ class Login
         $secret = (string) Fixtures::get('owner_totp_secret');
         $this->I->fillField('#code', (new TwoFactorAuth('Julianna', 6, 30, 'sha1'))->getCode($secret));
         $this->I->click('input[type="submit"]');
-        $this->I->waitForElementVisible('.welcome-widget', 120);
-        $this->I->see('Hi John');
+        // Full MFA sign-in now lands on the Agent command center, not the
+        // retired dashboard home. A visible command center also proves that
+        // the session has passed the MFA gate.
+        $this->I->waitForElementVisible('[data-agent-command-center]', 120);
 
         $this->saveSessionSnapshot('julianna_session');
     }

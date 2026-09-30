@@ -47,7 +47,7 @@ class UpdatedTest extends \Unit\TestCase
     }
 
     /** Run the middleware; returns [response, nextWasCalled]. */
-    private function handleRequest(): array
+    private function handleRequest(string $path = '/dashboard/home', ?string $route = null): array
     {
         // The redirect path resolves Frontcontroller from the container; its
         // real constructor needs the full HTTP stack, so bind a bare instance
@@ -57,9 +57,15 @@ class UpdatedTest extends \Unit\TestCase
             $this->make(\Leantime\Core\Controller\Frontcontroller::class)
         );
 
+        $request = IncomingRequest::create($path, 'GET');
+        if ($route !== null) {
+            $request->setCurrentRoute($route);
+            app()->instance('request', $request);
+        }
+
         $called = false;
         $response = (new Updated)->handle(
-            IncomingRequest::create('/dashboard/home', 'GET'),
+            $request,
             function () use (&$called) {
                 $called = true;
 
@@ -113,5 +119,31 @@ class UpdatedTest extends \Unit\TestCase
         $this->assertSame(1, $reads);
         $this->assertStringContainsString('/install/update', $response->headers->get('Location') ?? '', 'the redirect still points at the updater');
         $this->assertFalse(session('isUpdated'));
+    }
+
+    public function test_api_request_with_old_successful_session_cannot_bypass_new_schema(): void
+    {
+        session(['dbVersion' => '3.5.25', 'isUpdated' => true]);
+        $this->appSettings('3.5.26');
+        $this->settingRepo(['3.5.25'], $reads);
+
+        [$response, $nextCalled] = $this->handleRequest('/api/jsonrpc');
+
+        $this->assertFalse($nextCalled);
+        $this->assertSame(1, $reads);
+        $this->assertStringContainsString('/install/update', $response->headers->get('Location') ?? '');
+        $this->assertFalse(session('isUpdated'));
+    }
+
+    public function test_owner_can_reach_login_during_a_pending_schema_update(): void
+    {
+        session(['dbVersion' => '3.5.25', 'isUpdated' => false]);
+        $this->appSettings('3.5.26');
+        $this->settingRepo(['3.5.25'], $reads);
+
+        [, $nextCalled] = $this->handleRequest('/auth/login', 'auth.login');
+
+        $this->assertTrue($nextCalled);
+        $this->assertSame(1, $reads);
     }
 }

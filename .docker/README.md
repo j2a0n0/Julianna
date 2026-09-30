@@ -48,15 +48,61 @@ The compose file exposes port 8080 for the reverse proxy and does not terminate
 TLS itself. Optional services such as SMTP, Redis, S3, Slack, Telegram, and
 Sentry remain disabled unless corresponding `JULIANNA_*` values are supplied.
 
-## Idea Room AI
+## Agent and Whiteboard
 
-Idea Room is available to authenticated users at `/idea-room`. It shows a setup
-message until `JULIANNA_AI_PROVIDER` (`openai` or `anthropic`),
-`JULIANNA_AI_MODEL`, and `JULIANNA_AI_API_KEY` are configured. Configure these
-only on the server; the browser never receives credentials. For container
-secrets, mount a readable file and set `JULIANNA_AI_API_KEY_FILE` to its path.
-Provider requests are made only when a user sends a message; approving a plan
-does not call the provider.
+The authenticated `/agent` command center is Julianna's primary workspace.
+The assistant drawer is available throughout the application. The agent uses
+the same first-party permission-checked tool catalog as `/mcp`. A project must
+be selected before the assistant can write to it; enabling autopilot permits
+background upkeep, while pausing it stops autonomous work. Direct, permitted
+requests still work with autopilot off or paused. Clear actions execute without a
+per-action approval. Communications remain drafts until a PM reviews them.
+Run history and recoverable Whiteboard changes are visible on the command
+center. Existing Idea Room rooms and canvases remain readable under
+`/agent/archive`; their old mutation endpoints and MCP tools are retired.
+
+After signing in as the installation owner with MFA, open `/agent/settings` to
+choose OpenAI, Anthropic, DeepSeek, or Kimi, select a suggested API model (or
+enter a custom model ID), and paste its provider API key. The suggested list is
+not exhaustive; model availability depends on the provider account. The key is
+submitted over HTTPS (or loopback HTTP for
+local development), encrypted in the database with `JULIANNA_APP_KEY`, and
+never displayed again. A blank key field preserves the saved key only when the
+provider is unchanged. The connection check sends a fixed test message with no
+workspace data or tools; it can incur a small provider charge. Choose a model
+available to your provider account. The connector is installation-wide, while
+project agent activation and pause controls remain separate.
+
+Alternatively, set `JULIANNA_AI_PROVIDER`, `JULIANNA_AI_MODEL`, and
+`JULIANNA_AI_API_KEY` on the server. For container secrets, mount a readable
+file and set `JULIANNA_AI_API_KEY_FILE` to its path. Website settings take
+precedence over those environment values; disabling the website connector
+also masks environment fallback. Preserve `JULIANNA_APP_KEY` during upgrades
+and backup restoration or saved credentials cannot be decrypted. Use a
+provider API key, not a consumer-chat password. The old Idea Room temporary
+browser key does not power the agent.
+`JULIANNA_AI_REQUESTS_PER_HOUR` caps new in-app requests per user (default 20);
+idempotent HTTP replays do not consume another request.
+
+For optional live internet research, the installation owner can paste a Brave
+Search API key under `/agent/settings`. It is encrypted with `JULIANNA_APP_KEY`
+and never displayed again. Alternatively, set `JULIANNA_WEB_SEARCH_API_KEY` on
+the server and recreate the app container. Website settings take precedence,
+and disabling them masks the environment fallback. This is a separate key from
+the AI model provider key. When configured, the agent and
+human Bearer-token MCP clients receive read-only `searchWeb` and `researchWeb`
+tools. The former returns up to five public search-result snippets; the latter
+returns short source-linked extracts from up to three pages. Neither tool
+fetches model-supplied URLs, logs in, posts, or browses private networks. They
+reject email addresses and credential-like queries, limit each user to 20
+searches per hour, and are absent from the catalog when the key is missing. Search
+queries are sent to Brave; avoid including confidential project information.
+
+Project Whiteboards are saved locally through Julianna's own service and
+revision-checked APIs. Excalidraw editor assets are bundled in the image;
+the first release does not provide live co-editing or cloud collaboration.
+Personal Bearer tokens can use Whiteboard MCP tools. Legacy `x-api-key`
+principals do not gain Whiteboard access.
 
 ## Secret files
 

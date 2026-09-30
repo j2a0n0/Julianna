@@ -31,6 +31,10 @@ let mix = require('laravel-mix');
 require('laravel-mix-eslint');
 require('mix-tailwindcss');
 
+// Build containers and restricted desktop shells cannot spawn native desktop
+// notification helpers; notifications are not part of production output.
+mix.disableNotifications();
+
 require('dotenv').config({ path: 'config/.env' });
 
 mix
@@ -70,7 +74,10 @@ getFilesRecursive('app/Domain', '.js').forEach(file => {
         "./public/assets/js/app/core/dateHelper.js",
         "./public/assets/js/app/core/accessibility.js",
 
-        ...glob.sync("./app/Domain/**/*.js").map(f => `./${f}`)
+        ...glob.sync("./app/Domain/**/*.js")
+            .filter(f => !f.endsWith('/Whiteboards/Js/whiteboard.js')
+                && !f.endsWith('/IdeaRoom/Js/ideaRoomController.js'))
+            .map(f => `./${f}`)
     ], `public/dist/js/compiled-app.${version}.min.js`)
     .combine([
         "./node_modules/jquery/dist/jquery.js",
@@ -130,6 +137,11 @@ getFilesRecursive('app/Domain', '.js').forEach(file => {
         "./node_modules/datatables.net-buttons/js/buttons.colVis.js",
     ], `public/dist/js/compiled-table-component.${version}.min.js`)
     .js('./public/assets/js/app/core/tiptap/index.js', `public/dist/js/compiled-tiptap-editor.${version}.min.js`)
+    // Whiteboard is a separate React island; never concatenate it into the
+    // legacy global app bundle or load it on unrelated pages.
+    .js('./app/Domain/Whiteboards/Js/whiteboard.js', `public/dist/js/compiled-whiteboard.${version}.min.js`)
+    .copy('./node_modules/@excalidraw/excalidraw/dist/prod/index.css', 'public/dist/excalidraw/index.css')
+    .copyDirectory('./node_modules/@excalidraw/excalidraw/dist/prod/fonts', 'public/dist/excalidraw/fonts')
     .combine([
         './public/assets/js/app/core/tiptap/extensions/toolbar.js'
     ], `public/dist/js/compiled-tiptap-toolbar.${version}.min.js`)
@@ -173,7 +185,12 @@ getFilesRecursive('app/Domain', '.js').forEach(file => {
                 'images': path.resolve(__dirname, 'public/assets/images'),
                 'js': path.resolve(__dirname, 'public/assets/js'),
                 'css': path.resolve(__dirname, 'public/assets/css'),
-                'fonts': path.resolve(__dirname, 'public/assets/fonts')
+                'fonts': path.resolve(__dirname, 'public/assets/fonts'),
+                // Excalidraw 0.18 references RoughJS without .js from strict
+                // ESM modules; Webpack 5 requires exact extension aliases.
+                'roughjs/bin/rough$': path.resolve(__dirname, 'node_modules/roughjs/bin/rough.js'),
+                'roughjs/bin/generator$': path.resolve(__dirname, 'node_modules/roughjs/bin/generator.js'),
+                'roughjs/bin/math$': path.resolve(__dirname, 'node_modules/roughjs/bin/math.js')
             }
         }
     });

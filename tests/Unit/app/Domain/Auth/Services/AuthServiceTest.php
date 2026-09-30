@@ -42,16 +42,26 @@ class AuthServiceTest extends TestCase
         );
     }
 
-    public function test_resolve_safe_redirect_defaults_to_dashboard(): void
+    public function test_resolve_safe_redirect_defaults_to_agent(): void
     {
         $service = $this->makeService();
 
-        $this->assertSame(BASE_URL.'/dashboard/home', $service->resolveSafeRedirect(null));
-        $this->assertSame(BASE_URL.'/dashboard/home', $service->resolveSafeRedirect(''));
-        $this->assertSame(BASE_URL.'/dashboard/home', $service->resolveSafeRedirect('/'));
+        $this->assertSame(BASE_URL.'/agent', $service->resolveSafeRedirect(null));
+        $this->assertSame(BASE_URL.'/agent', $service->resolveSafeRedirect(''));
+        $this->assertSame(BASE_URL.'/agent', $service->resolveSafeRedirect('/'));
     }
 
-    public function test_authenticated_redirect_uses_profile_when_default_dashboard_is_not_available_to_role(): void
+    public function test_authenticated_redirect_sends_every_role_to_agent_by_default(): void
+    {
+        $service = $this->makeService();
+
+        foreach (['readonly', 'commenter', 'editor', 'manager', 'admin'] as $role) {
+            session(['userdata.role' => $role]);
+            $this->assertSame(BASE_URL.'/agent', $service->resolveAuthenticatedRedirect(null));
+        }
+    }
+
+    public function test_authenticated_redirect_uses_profile_when_legacy_dashboard_is_not_available_to_role(): void
     {
         $service = $this->makeService();
 
@@ -93,9 +103,9 @@ class AuthServiceTest extends TestCase
         $service = $this->makeService();
 
         // An absolute external URL is a valid URL, so it is rejected and the
-        // default dashboard target is returned instead.
+        // default agent destination is returned instead.
         $this->assertSame(
-            BASE_URL.'/dashboard/home',
+            BASE_URL.'/agent',
             $service->resolveSafeRedirect('https://evil.example.com')
         );
     }
@@ -144,7 +154,7 @@ class AuthServiceTest extends TestCase
         // as BASE_URL — str_starts_with won't match because the scheme+host
         // differ. This gets rejected as external.
         $this->assertSame(
-            BASE_URL.'/dashboard/home',
+            BASE_URL.'/agent',
             $service->resolveSafeRedirect('https://evil.example.com/'.BASE_URL.'/dashboard/home')
         );
     }
@@ -159,19 +169,19 @@ class AuthServiceTest extends TestCase
         // bogus internal path /ile.example.com/pwn instead of rejecting it outright.
         // Stripping only on a boundary (end, '/', '?', '#') keeps it external.
         $this->assertSame(
-            BASE_URL.'/dashboard/home',
+            BASE_URL.'/agent',
             $service->resolveSafeRedirect(BASE_URL.'ile.example.com/pwn')
         );
     }
 
-    public function test_resolve_safe_redirect_returns_dashboard_for_base_url_itself(): void
+    public function test_resolve_safe_redirect_returns_agent_for_base_url_itself(): void
     {
         $service = $this->makeService();
 
         // Exactly BASE_URL (with and without a trailing slash) has no path to go to —
-        // it must fall back to the dashboard rather than the bare app root.
-        $this->assertSame(BASE_URL.'/dashboard/home', $service->resolveSafeRedirect(BASE_URL));
-        $this->assertSame(BASE_URL.'/dashboard/home', $service->resolveSafeRedirect(BASE_URL.'/'));
+        // it must fall back to the agent rather than the bare app root.
+        $this->assertSame(BASE_URL.'/agent', $service->resolveSafeRedirect(BASE_URL));
+        $this->assertSame(BASE_URL.'/agent', $service->resolveSafeRedirect(BASE_URL.'/'));
     }
 
     public function test_resolve_safe_redirect_blocks_logout_including_variants(): void
@@ -191,7 +201,7 @@ class AuthServiceTest extends TestCase
             BASE_URL.'/auth/logout',
         ] as $variant) {
             $this->assertSame(
-                BASE_URL.'/dashboard/home',
+                BASE_URL.'/agent',
                 $service->resolveSafeRedirect($variant),
                 sprintf('logout variant "%s" must not be an accepted redirect target', $variant)
             );
@@ -205,11 +215,11 @@ class AuthServiceTest extends TestCase
         // Encoded CR/LF must never reach the Location header, and leading whitespace
         // must not be usable to pad a protocol-relative URL past the '//' guard.
         $this->assertSame(
-            BASE_URL.'/dashboard/home',
+            BASE_URL.'/agent',
             $service->resolveSafeRedirect('%09//evil.example.com')
         );
         $this->assertSame(
-            BASE_URL.'/dashboard/home',
+            BASE_URL.'/agent',
             $service->resolveSafeRedirect(' //evil.example.com')
         );
         $this->assertStringNotContainsString(
@@ -240,9 +250,9 @@ class AuthServiceTest extends TestCase
 
         // Protocol-relative URL (//attacker.com) — FILTER_VALIDATE_URL
         // treats these as valid URLs, so they are correctly rejected
-        // and the default dashboard redirect is returned.
+        // and the default agent redirect is returned.
         $this->assertSame(
-            BASE_URL.'/dashboard/home',
+            BASE_URL.'/agent',
             $service->resolveSafeRedirect('//attacker.com')
         );
     }
@@ -254,7 +264,7 @@ class AuthServiceTest extends TestCase
         // Backslash variant (\/\/attacker.com) — some parsers treat
         // this as a protocol-relative URL. Verify it is rejected.
         $this->assertSame(
-            BASE_URL.'/dashboard/home',
+            BASE_URL.'/agent',
             $service->resolveSafeRedirect('\/\/attacker.com')
         );
     }

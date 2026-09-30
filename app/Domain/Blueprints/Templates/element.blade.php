@@ -18,6 +18,9 @@
                 // Use the module-scoped count already computed by getCanvasItemsById
                 // (avoids an unscoped per-item query that miscounts across modules).
                 $nbcomments = (int) ($row['commentCount'] ?? 0);
+                // Keep older or incomplete items readable without rewriting their data.
+                $statusLabel = $statusLabels[$row['status'] ?? ''] ?? (count($statusLabels) ? reset($statusLabels) : null);
+                $relatesLabel = $relatesLabels[$row['relates'] ?? ''] ?? ($relatesLabels['relates_none'] ?? (count($relatesLabels) ? reset($relatesLabels) : null));
             @endphp
 
             <div class="ticketBox" id="item_{{ $row['id'] }}">
@@ -53,12 +56,12 @@
 
                         <div class="clearfix" style="padding-bottom: 8px;"></div>
 
-                        @if(! empty($statusLabels))
+                        @if($statusLabel !== null)
                             <div class="dropdown ticketDropdown statusDropdown colorized show firstDropdown">
-                                <a class="dropdown-toggle f-left status label-{{ $statusLabels[$row['status']]['dropdown'] }}"
+                                <a class="dropdown-toggle f-left status label-{{ $statusLabel['dropdown'] }}"
                                    href="javascript:void(0);" role="button"
                                    id="statusDropdownMenuLink{{ $row['id'] }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    <span class="text">{{ $statusLabels[$row['status']]['title'] }}</span> <i class="fa fa-caret-down" aria-hidden="true"></i>
+                                    <span class="text">{{ $statusLabel['title'] }}</span> <i class="fa fa-caret-down" aria-hidden="true"></i>
                                 </a>
                                 <ul class="dropdown-menu" aria-labelledby="statusDropdownMenuLink{{ $row['id'] }}">
                                     <li class="nav-header border">{!! __('dropdown.choose_status') !!}</li>
@@ -75,13 +78,13 @@
                             </div>
                         @endif
 
-                        @if(! empty($relatesLabels))
+                        @if($relatesLabel !== null)
                             <div class="dropdown ticketDropdown relatesDropdown colorized show firstDropdown">
-                                <a class="dropdown-toggle f-left relates label-{{ $relatesLabels[$row['relates']]['dropdown'] }}"
+                                <a class="dropdown-toggle f-left relates label-{{ $relatesLabel['dropdown'] }}"
                                    href="javascript:void(0);" role="button"
                                    id="relatesDropdownMenuLink{{ $row['id'] }}" data-toggle="dropdown" aria-haspopup="true"
                                    aria-expanded="false">
-                                    <span class="text">{{ $relatesLabels[$row['relates']]['title'] }}</span> <i class="fa fa-caret-down" aria-hidden="true"></i>
+                                    <span class="text">{{ $relatesLabel['title'] }}</span> <i class="fa fa-caret-down" aria-hidden="true"></i>
                                 </a>
                                 <ul class="dropdown-menu" aria-labelledby="relatesDropdownMenuLink{{ $row['id'] }}">
                                     <li class="nav-header border">{!! __('dropdown.choose_relates') !!}</li>

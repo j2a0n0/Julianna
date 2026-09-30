@@ -26,6 +26,12 @@ final class ValidateJuliannaSession
 
     public function handle(IncomingRequest $request, Closure $next): Response
     {
+        // MCP runs with a throwaway token-authenticated session. Ignore any
+        // accompanying browser cookie; AuthCheck authenticates the token anew.
+        if ($request->isMcpRequest()) {
+            return $next($request);
+        }
+
         $hasWebUser = session()->exists('userdata');
 
         // Stateless API credentials are independently revocable and establish

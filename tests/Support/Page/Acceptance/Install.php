@@ -61,7 +61,7 @@ class Install
         Fixtures::add('owner_recovery_code', trim($this->I->grabTextFrom('#recovery-codes li')));
         $this->I->checkOption('input[name="saved"]');
         $this->I->click('input[type="submit"]');
-        $this->I->waitForElementVisible('.welcome-widget', 120);
+        $this->I->waitForElementVisible('[data-agent-command-center]', 120);
 
         Fixtures::add('installed', true);
         $this->suppressModals();

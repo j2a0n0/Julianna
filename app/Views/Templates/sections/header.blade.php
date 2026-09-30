@@ -26,6 +26,8 @@
     // mtime changes on every build, which busts exactly when needed.
     $mainCssPath = APP_ROOT.'/public/dist/css/main.'.$version.'.min.css';
     $cssBust = is_file($mainCssPath) ? filemtime($mainCssPath) : $version;
+    $appJsPath = APP_ROOT.'/public/dist/js/compiled-app.'.$version.'.min.js';
+    $jsBust = is_file($appJsPath) ? filemtime($appJsPath) : $version;
 @endphp
 <link rel="stylesheet" href="{!! BASE_URL !!}/dist/css/main.{!! $version !!}.min.css?v={!! $cssBust !!}"/>
 <link rel="stylesheet" href="{!! BASE_URL !!}/dist/css/app.{!! $version !!}.min.css?v={!! $cssBust !!}"/>
@@ -70,7 +72,7 @@
 @dispatchEvent('afterScriptLibTags')
 
 <!-- app -->
-<script src="{!! BASE_URL !!}/dist/js/compiled-app.{!! $version !!}.min.js"></script>
+<script src="{!! BASE_URL !!}/dist/js/compiled-app.{!! $version !!}.min.js?v={!! $jsBust !!}"></script>
 @dispatchEvent('afterMainScriptTag')
 
 <!--

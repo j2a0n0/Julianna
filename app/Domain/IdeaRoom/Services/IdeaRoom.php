@@ -16,6 +16,7 @@ use Leantime\Domain\Goalcanvas\Services\Goalcanvas;
 use Leantime\Domain\IdeaRoom\AI\ChatRequest;
 use Leantime\Domain\IdeaRoom\AI\ProviderFactory;
 use Leantime\Domain\IdeaRoom\Repositories\RoomRepository;
+use Leantime\Domain\IdeaRoom\Support\GraphConflictException;
 use Leantime\Domain\IdeaRoom\Support\Plan;
 use Leantime\Domain\Projects\Permissions\ProjectsPermissions;
 use Leantime\Domain\Projects\Services\Projects;
@@ -35,7 +36,7 @@ final class IdeaRoom
 
     public function providerConfigured(): bool
     {
-        return ProviderFactory::fromEnvironment() !== null;
+        return ProviderFactory::forCurrentSession() !== null;
     }
 
     public function canCreateProject(): bool
@@ -57,6 +58,13 @@ final class IdeaRoom
         ));
     }
 
+    public function canReferenceProject(int $projectId): bool
+    {
+        return $projectId > 0
+            && $this->permissions->currentUserCan(ProjectsPermissions::VIEW, $projectId)
+            && is_array($this->projects->getProject($projectId));
+    }
+
     /** @return list<array<string, mixed>> */
     public function myRooms(): array
     {
@@ -66,9 +74,6 @@ final class IdeaRoom
     /** @return array<string, mixed> */
     public function create(string $idea, ?int $projectId): array
     {
-        if (! $this->providerConfigured()) {
-            throw new InvalidArgumentException('An AI provider must be configured before starting a room.');
-        }
         $idea = trim($idea);
         if ($idea === '' || mb_strlen($idea) > 5000) {
             throw new InvalidArgumentException('Describe your idea in 1–5000 characters.');
@@ -120,6 +125,41 @@ final class IdeaRoom
     }
 
     /** @param array<string, mixed> $room */
+    public function canChat(array $room): bool
+    {
+        return $this->canControl($room) && $room['status'] !== 'archived';
+    }
+
+    /** @return array<string, mixed> */
+    public function updateContext(int $id, ?int $projectId, ?int $expectedVersion = null): array
+    {
+        if ($projectId !== null) {
+            $this->permissions->authorize(ProjectsPermissions::VIEW, $projectId);
+            if ($this->projects->getProject($projectId) === false) {
+                throw new NotFoundException;
+            }
+        } elseif (! $this->canCreateProject()) {
+            throw new AuthorizationException;
+        }
+
+        return $this->rooms->transaction(function () use ($id, $projectId, $expectedVersion): array {
+            $room = $this->rooms->lock($id) ?? throw new NotFoundException;
+            $this->authorizeRead($room);
+            if ($expectedVersion !== null && (int) ($room['graph_version'] ?? 0) !== $expectedVersion) {
+                throw new GraphConflictException;
+            }
+            if (! $this->canEdit($room)
+                || $this->rooms->pendingActions($id) !== []
+                || in_array($this->rooms->generation($id)['status'] ?? null, ['running', 'awaiting_confirmation'], true)) {
+                throw new AuthorizationException;
+            }
+            $this->rooms->updateProjectContext($id, $projectId);
+
+            return ['room' => $this->room($id)];
+        });
+    }
+
+    /** @param array<string, mixed> $room */
     public function canApprove(array $room): bool
     {
         if (! $this->canEdit($room)) {
@@ -146,7 +186,7 @@ final class IdeaRoom
     /** @return array<string, mixed> */
     public function send(int $id, string $content): array
     {
-        $provider = ProviderFactory::fromEnvironment();
+        $provider = ProviderFactory::forCurrentSession();
         if ($provider === null) {
             throw new InvalidArgumentException('An AI provider must be configured before chatting.');
         }
@@ -177,11 +217,26 @@ final class IdeaRoom
             if (! $this->canEdit($current)) {
                 throw new AuthorizationException;
             }
-            $plan = Plan::merge($current['plan'], $reply->planPatch);
-            $this->rooms->updatePlan($id, $plan, 'active');
+            $plan = $current['plan'];
+            $status = $current['status'];
+            if ($reply->planPatch !== []) {
+                // Keep the legacy chat path on the same revisioned write path as
+                // canvas chat, MCP changes, and manual plan edits.
+                $change = app(IdeaGraph::class)->applyPatch(
+                    $id,
+                    ['plan' => $reply->planPatch],
+                    [],
+                    'chat',
+                    'AI plan update',
+                    (int) $current['graph_version'],
+                    (int) $current['plan_version'],
+                );
+                $plan = $change['plan'];
+                $status = 'ready_for_review';
+            }
             $assistant = $this->rooms->addMessage($id, 'assistant', $reply->text);
 
-            return ['message' => $message, 'assistant' => $assistant, 'plan' => $plan, 'status' => 'active'];
+            return ['message' => $message, 'assistant' => $assistant, 'plan' => $plan, 'status' => $status];
         });
     }
 
@@ -190,17 +245,41 @@ final class IdeaRoom
      */
     public function savePlan(int $id, array $plan): array
     {
-        $plan = Plan::replace($plan);
+        return app(IdeaGraph::class)->replacePlan($id, $plan);
+    }
 
-        return $this->rooms->transaction(function () use ($id, $plan): array {
+    /**
+     * Prepare a complete, already-accepted plan for human review. This never creates
+     * projects, goals, milestones, tasks, or other workspace records.
+     *
+     * @return array{room: array<string, mixed>, status: string}
+     */
+    public function requestReview(int $id, int $expectedGraphVersion, int $expectedPlanVersion): array
+    {
+        return $this->rooms->transaction(function () use ($id, $expectedGraphVersion, $expectedPlanVersion): array {
             $room = $this->rooms->lock($id) ?? throw new NotFoundException;
             $this->authorizeRead($room);
             if (! $this->canEdit($room)) {
                 throw new AuthorizationException;
             }
-            $this->rooms->updatePlan($id, $plan, 'ready_for_review');
+            if ((int) ($room['graph_version'] ?? 0) !== $expectedGraphVersion
+                || (int) ($room['plan_version'] ?? 0) !== $expectedPlanVersion) {
+                throw new GraphConflictException;
+            }
+            if ($this->rooms->pendingActions($id) !== []
+                || in_array($this->rooms->generation($id)['status'] ?? null, ['running', 'awaiting_confirmation'], true)) {
+                throw new InvalidArgumentException('Resolve workspace confirmations first.');
+            }
+            Plan::assertReady($room['plan'], $room['project_id'] === null);
+            if ($room['status'] !== 'ready_for_review') {
+                $this->rooms->markReadyForReview($id);
+                $this->rooms->addEvent($id, 'approval.requested', [
+                    'graphVersion' => $expectedGraphVersion,
+                    'planVersion' => $expectedPlanVersion,
+                ]);
+            }
 
-            return ['plan' => $plan, 'status' => 'ready_for_review'];
+            return ['room' => $this->room($id), 'status' => 'ready_for_review'];
         });
     }
 

@@ -101,6 +101,47 @@ class McpCest
         foreach (['findTasks', 'getAllProjects', 'getAllGoals', 'getCalendar', 'getComments', 'logTime'] as $expected) {
             Assert::assertContains($expected, $toolNames, "Tool {$expected} missing from tools/list");
         }
+
+        foreach ([
+            'listIdeaRooms', 'getIdeaRoom', 'getIdeaRoomHistory', 'getIdeaRoomState',
+            'getIdeaRoomGraph', 'getIdeaRoomPlan', 'listIdeaRoomCanvasHistory', 'listIdeaRoomPendingActions',
+            'createIdeaRoom', 'sendIdeaRoomMessage', 'setIdeaRoomMode', 'updateIdeaRoomContext',
+            'proposeIdeaRoomPlan', 'requestIdeaRoomApproval', 'restoreIdeaRoomCanvasHistory', 'proposeCanvasPatch', 'addCanvasNode',
+            'editCanvasNode', 'renameCanvasNode', 'deleteCanvasNode', 'restoreCanvasNode',
+            'connectCanvasNodes', 'disconnectCanvasNodes',
+        ] as $expected) {
+            Assert::assertContains($expected, $toolNames, "Idea Room tool {$expected} missing from tools/list");
+        }
+    }
+
+    #[Group('mcp')]
+    public function mcpReadsIdeaRoomWithBearerToken(AcceptanceTester $I, Scenario $scenario)
+    {
+        $this->enableMcpPluginOrSkip($I, $scenario);
+        $this->mintBearerToken($I);
+
+        $created = $this->callTool($I, 'createIdeaRoom', ['idea' => 'A token-backed Idea Room test']);
+        Assert::assertFalse($created['result']['isError'] ?? true, 'createIdeaRoom failed: '.json_encode($created));
+        $roomId = (int) ($created['result']['structuredContent']['room']['id'] ?? 0);
+        Assert::assertGreaterThan(0, $roomId);
+
+        $listed = $this->callTool($I, 'listIdeaRooms', ['limit' => 1]);
+        Assert::assertFalse($listed['result']['isError'] ?? true, 'listIdeaRooms failed: '.json_encode($listed));
+        Assert::assertContains($roomId, array_column($listed['result']['structuredContent']['rooms'] ?? [], 'id'));
+
+        $history = $this->callTool($I, 'getIdeaRoomHistory', ['roomId' => $roomId, 'limit' => 1]);
+        Assert::assertFalse($history['result']['isError'] ?? true, 'getIdeaRoomHistory failed: '.json_encode($history));
+        Assert::assertSame('A token-backed Idea Room test', $history['result']['structuredContent']['messages'][0]['content'] ?? null);
+        Assert::assertArrayNotHasKey('metadata', $history['result']['structuredContent']['messages'][0]);
+
+        $graph = $this->callTool($I, 'getIdeaRoomGraph', ['roomId' => $roomId]);
+        Assert::assertFalse($graph['result']['isError'] ?? true, 'getIdeaRoomGraph failed: '.json_encode($graph));
+        Assert::assertSame(0, $graph['result']['structuredContent']['graph']['version'] ?? null);
+        Assert::assertSame([], $graph['result']['structuredContent']['graph']['nodes'] ?? null);
+
+        $unavailable = $this->callTool($I, 'getIdeaRoomGraph', ['roomId' => $roomId + 1000000]);
+        Assert::assertTrue($unavailable['result']['isError'] ?? false);
+        Assert::assertSame('room_not_found', $unavailable['result']['structuredContent']['code'] ?? null);
     }
 
     #[Group('mcp')]

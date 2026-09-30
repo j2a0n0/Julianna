@@ -24,7 +24,7 @@ services:
       start_period: 30s
 
   julianna:
-    image: julianna/app:${JULIANNA_VERSION:-dev}
+    image: julianna/app:${JULIANNA_IMAGE_TAG:-${JULIANNA_VERSION:-dev}}
     pull_policy: build
     build:
       context: ..
@@ -68,8 +68,10 @@ services:
       JULIANNA_EMAIL_SMTP_PORT: ${JULIANNA_EMAIL_SMTP_PORT:-}
       JULIANNA_AI_PROVIDER: ${JULIANNA_AI_PROVIDER:-}
       JULIANNA_AI_MODEL: ${JULIANNA_AI_MODEL:-}
+      JULIANNA_AI_REQUESTS_PER_HOUR: ${JULIANNA_AI_REQUESTS_PER_HOUR:-20}
       JULIANNA_AI_API_KEY: ${JULIANNA_AI_API_KEY:-}
       JULIANNA_AI_API_KEY_FILE: ${JULIANNA_AI_API_KEY_FILE:-}
+      JULIANNA_WEB_SEARCH_API_KEY: ${JULIANNA_WEB_SEARCH_API_KEY:-}
     ports:
       - "${JULIANNA_BIND_ADDRESS:-127.0.0.1}:${JULIANNA_PORT:-8080}:8080"
     volumes:

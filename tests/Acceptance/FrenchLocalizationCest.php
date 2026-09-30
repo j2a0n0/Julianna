@@ -84,6 +84,20 @@ class FrenchLocalizationCest
         $this->assertFrenchPage($I, '/timesheets/showMy', 'Ma feuille de temps');
         $this->assertFrenchPage($I, '/users/editOwn#settings', 'Langue');
         $this->assertFrenchPage($I, '/setting/editCompanySettings', 'Paramètres');
+        $this->assertFrenchPage($I, '/agent', 'Qu’est-ce qu’on fait avancer aujourd’hui ?');
+        $I->see('Confier une tâche à Julianna');
+        $I->dontSee('Give Julianna a task');
+        $this->assertFrenchPage($I, '/agent/projects/1', 'Périmètre du projet');
+        $this->assertFrenchPage($I, '/agent/archive', 'Archives d’Idea Room');
+        $this->assertFrenchPage($I, '/whiteboards/projects/1', 'Tableaux blancs');
+        $I->fillField('#whiteboard-title', 'Atelier de test');
+        $I->click('#whiteboard-create-form button[type="submit"]');
+        $I->waitForJS('return /^\/whiteboards\/\d+$/.test(window.location.pathname);', 30);
+        $I->waitForJS("return !!document.querySelector('#julianna-whiteboard-editor .excalidraw');", 60);
+        $I->seeElement('html[lang="fr"]');
+        $I->seeElement('#julianna-whiteboard-editor[data-locale="fr-FR"]');
+        $I->see('Enregistrer');
+        $I->dontSee('Could not save. Please retry.');
         $this->assertFrenchPage($I, '/route-inexistante-pour-test', 'Oups, quelque chose ne va pas.');
 
         Assert::assertSame('fr-CH', $I->grabCookie('language'), 'The selected locale cookie must persist before logout.');

@@ -8,6 +8,7 @@ return [
             /*
              * Application Service Providers...
              */
+            \Leantime\Core\Configuration\EnvironmentServiceProvider::class,
             \Leantime\Core\Application\AppServiceProvider::class,
 
             \Leantime\Core\Support\LoadMacrosServiceProvider::class,

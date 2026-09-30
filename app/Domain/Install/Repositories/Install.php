@@ -100,6 +100,17 @@ class Install
         30525,
         30526,
         30527,
+        30528,
+        30529,
+        30530,
+        30531,
+        30532,
+        30533,
+        30534,
+        30535,
+        30536,
+        30537,
+        30538,
     ];
 
     /**
@@ -3254,6 +3265,164 @@ class Install
             Log::error('Migration 30527: '.$e->getMessage());
 
             return ['Migration 30527 failed: '.$e->getMessage()];
+        }
+
+        return true;
+    }
+
+    /** Add resumable chat events, tool actions, and transcript metadata. */
+    public function update_sql_30528(): bool|array
+    {
+        try {
+            app()->make(SchemaBuilder::class)->createIdeaRoomChatTables();
+        } catch (\Exception $e) {
+            Log::error('Migration 30528: '.$e->getMessage());
+
+            return ['Migration 30528 failed: '.$e->getMessage()];
+        }
+
+        return true;
+    }
+
+    /** Add versioned Idea Room canvas nodes, links, citations, and proposals. */
+    public function update_sql_30529(): bool|array
+    {
+        try {
+            app()->make(SchemaBuilder::class)->createIdeaRoomGraphTables();
+        } catch (\Exception $e) {
+            Log::error('Migration 30529: '.$e->getMessage());
+
+            return ['Migration 30529 failed: '.$e->getMessage()];
+        }
+
+        return true;
+    }
+
+    /** Add recoverable canvas deletion and versioned MCP proposal metadata. */
+    public function update_sql_30530(): bool|array
+    {
+        try {
+            app()->make(SchemaBuilder::class)->createIdeaRoomMcpColumns();
+        } catch (\Exception $e) {
+            Log::error('Migration 30530: '.$e->getMessage());
+
+            return ['Migration 30530 failed: '.$e->getMessage()];
+        }
+
+        return true;
+    }
+
+    /** Add durable room-scoped canvas and plan history. */
+    public function update_sql_30531(): bool|array
+    {
+        try {
+            app()->make(SchemaBuilder::class)->createIdeaRoomHistoryTable();
+        } catch (\Exception $e) {
+            Log::error('Migration 30531: '.$e->getMessage());
+
+            return ['Migration 30531 failed: '.$e->getMessage()];
+        }
+
+        return true;
+    }
+
+    /** Add per-project autonomous-agent controls and durable run/activity history. */
+    public function update_sql_30532(): bool|array
+    {
+        try {
+            app()->make(SchemaBuilder::class)->createProjectAgentTables();
+        } catch (\Exception $e) {
+            Log::error('Migration 30532: '.$e->getMessage());
+
+            return ['Migration 30532 failed: '.$e->getMessage()];
+        }
+
+        return true;
+    }
+
+    /** Add first-party, project-scoped Whiteboards and their immutable revisions/assets. */
+    public function update_sql_30533(): bool|array
+    {
+        try {
+            app()->make(SchemaBuilder::class)->createWhiteboardTables();
+            app()->make(\Leantime\Core\Auth\Permissions\PermissionRegistry::class)->flush();
+            $seeder = app()->make(\Leantime\Core\Auth\Permissions\PermissionSeeder::class);
+            $seeder->syncDiscoveredPermissions();
+            $seeder->seedBuiltInRoles();
+        } catch (\Exception $e) {
+            Log::error('Migration 30533: '.$e->getMessage());
+
+            return ['Migration 30533 failed: '.$e->getMessage()];
+        }
+
+        return true;
+    }
+
+    /** Add durable in-app agent conversations, turns, receipts, drafts, and questions. */
+    public function update_sql_30534(): bool|array
+    {
+        try {
+            app()->make(SchemaBuilder::class)->createAgentHarnessTables();
+        } catch (\Exception $e) {
+            Log::error('Migration 30534: '.$e->getMessage());
+
+            return ['Migration 30534 failed: '.$e->getMessage()];
+        }
+
+        return true;
+    }
+
+    /** Deduplicate project agent actions across independent event/daily runs. */
+    public function update_sql_30535(): bool|array
+    {
+        try {
+            app()->make(SchemaBuilder::class)->createAgentActionClaimsTable();
+        } catch (\Exception $e) {
+            Log::error('Migration 30535: '.$e->getMessage());
+
+            return ['Migration 30535 failed: '.$e->getMessage()];
+        }
+
+        return true;
+    }
+
+    /** Track live background workers before declaring an interrupted run. */
+    public function update_sql_30536(): bool|array
+    {
+        try {
+            app()->make(SchemaBuilder::class)->addProjectAgentRunHeartbeat();
+        } catch (\Exception $e) {
+            Log::error('Migration 30536: '.$e->getMessage());
+
+            return ['Migration 30536 failed: '.$e->getMessage()];
+        }
+
+        return true;
+    }
+
+    /** Store installation-wide AI credentials encrypted with Julianna's app key. */
+    public function update_sql_30537(): bool|array
+    {
+        try {
+            app()->make(SchemaBuilder::class)->createAgentAiSettingsTable();
+        } catch (\Exception $e) {
+            Log::error('Migration 30537: '.$e->getMessage());
+
+            return ['Migration 30537 failed: '.$e->getMessage()];
+        }
+
+        return true;
+    }
+
+    /** Store the independent Brave Search credential encrypted at rest. */
+    public function update_sql_30538(): bool|array
+    {
+        try {
+            app()->make(SchemaBuilder::class)->createAgentWebSearchSettingsTable();
+        } catch (\Exception $e) {
+            Log::error('Migration 30538: '.$e->getMessage());
+
+            return ['Migration 30538 failed: '.$e->getMessage()];
         }
 
         return true;

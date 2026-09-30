@@ -23,14 +23,21 @@ class Updated
      **/
     public function handle(IncomingRequest $request, Closure $next): Response
     {
-        // For HTMX and API requests, trust the session -- DB version can't change mid-session.
-        if (session('isUpdated') && ($request->isHtmxRequest() || $request->isApiOrCronRequest())) {
+        $settingsDbVersion = app()->make(AppSettings::class)->dbVersion;
+        $cachedDbVersion = session('dbVersion');
+
+        // A deployment can change the required schema while a browser session
+        // remains open. Only skip the settings query when that session already
+        // knows it has the schema required by this version of the code.
+        if (session('isUpdated')
+            && ($request->isHtmxRequest() || $request->isApiOrCronRequest())
+            && $cachedDbVersion !== null
+            && $this->getVersionInt($cachedDbVersion) >= $this->getVersionInt($settingsDbVersion)
+        ) {
             return $next($request);
         }
 
-        $cachedDbVersion = session('dbVersion');
         $dbVersion = $cachedDbVersion ?? app()->make(SettingRepository::class)->getSetting('db-version');
-        $settingsDbVersion = app()->make(AppSettings::class)->dbVersion;
 
         if ($dbVersion !== false) {
             // Setting dbVersion only if there is one in the db
@@ -79,7 +86,14 @@ class Updated
     {
         $frontController = app()->make(Frontcontroller::class);
 
-        $allowedRoutes = ['install', 'install.update', 'api.i18n'];
+        // The updater itself is owner-only in AuthCheck/Update. Authentication
+        // must remain reachable while a previous image's schema is behind so
+        // the owner can sign in and deliberately run the migration.
+        $allowedRoutes = [
+            'install', 'install.update', 'api.i18n',
+            'auth.login', 'auth.mfa', 'auth.recovery',
+            'auth.recoveryCodes', 'auth.resetPw',
+        ];
         $allowedRoutes = self::dispatchFilter('allowedRoutes', $allowedRoutes);
         if (in_array($frontController::getCurrentRoute(), $allowedRoutes)) {
             return false;

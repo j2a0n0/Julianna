@@ -59,7 +59,7 @@ class LoginCest
         $recoveryCode = (string) Fixtures::get('owner_recovery_code');
         $I->fillField('#code', $recoveryCode);
         $I->click('input[type="submit"]');
-        $I->waitForElementVisible('.welcome-widget', 120);
+        $I->waitForElementVisible('[data-agent-command-center]', 120);
 
         $I->amOnPage('/auth/logout');
         $this->submitPrimaryCredentials($I);

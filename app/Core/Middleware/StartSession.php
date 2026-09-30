@@ -62,7 +62,7 @@ class StartSession
         // session object is created with the array handler from the start.
         // Browser AJAX requests (JS calling JSON-RPC) are excluded so they
         // continue to share the user's web session.
-        if (($request->isApiOrCronRequest() || $request->isMcpRequest()) && ! $request->ajax()) {
+        if ($request->isMcpRequest() || ($request->isApiOrCronRequest() && ! $request->ajax())) {
             config(['session.driver' => 'array']);
             $this->manager->setDefaultDriver('array');
         }
@@ -102,7 +102,11 @@ class StartSession
 
         $response = $next($request);
 
-        $this->addCookieToResponse($response, $session);
+        // MCP credentials are bearer/API-key tokens. Never emit a throwaway
+        // session cookie that could imply the endpoint accepts cookie auth.
+        if (! $request->isMcpRequest()) {
+            $this->addCookieToResponse($response, $session);
+        }
 
         return $response;
     }

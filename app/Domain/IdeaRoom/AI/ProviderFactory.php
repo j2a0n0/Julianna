@@ -19,6 +19,16 @@ final class ProviderFactory
         );
     }
 
+    public static function forCurrentSession(?ClientInterface $http = null): ?AiProvider
+    {
+        $temporary = TemporaryAiConfiguration::current();
+        if ($temporary !== null) {
+            return self::fromConfiguration($temporary['provider'], $temporary['apiKey'], $temporary['model'], $http);
+        }
+
+        return self::fromEnvironment($http);
+    }
+
     public static function fromConfiguration(
         string $provider,
         string $apiKey,
@@ -38,6 +48,8 @@ final class ProviderFactory
         return match ($provider) {
             'openai' => new OpenAiProvider($http, $apiKey, $model),
             'anthropic' => new AnthropicProvider($http, $apiKey, $model),
+            'deepseek' => new OpenAiProvider($http, $apiKey, $model, 'https://api.deepseek.com/chat/completions', true, true),
+            'kimi' => new OpenAiProvider($http, $apiKey, $model, 'https://api.moonshot.ai/v1/chat/completions', false, false, true),
             default => null,
         };
     }

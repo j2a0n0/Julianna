@@ -19,25 +19,25 @@
         @if (! ($providerConfigured ?? false))
             <div class="alert alert-info" role="status">
                 <strong>{{ __('idea_room.setup_title') }}</strong>
-                {{ __('idea_room.setup_body') }}
+                {{ ($temporaryAiEnabled ?? false) ? __('idea_room.setup_testing_body') : __('idea_room.setup_body') }}
             </div>
         @endif
+
+        @include('idearoom::partials.temporaryAi')
 
         <div class="idea-room-index-grid">
             <section class="idea-room-card" aria-labelledby="idea-room-start-heading">
                 <h2 id="idea-room-start-heading">{{ __('idea_room.start') }}</h2>
                 <p>{{ __('idea_room.start_hint') }}</p>
-                <form id="idea-room-create-form">
+                <form id="idea-room-create-form" method="post" action="{{ BASE_URL }}/idea-room">
                     @csrf
                     <label for="idea-room-idea">{{ __('idea_room.idea_label') }}</label>
                     <textarea id="idea-room-idea" name="idea" rows="5" maxlength="5000"
-                              placeholder="{{ __('idea_room.idea_placeholder') }}" required
-                              @if (! ($providerConfigured ?? false)) disabled @endif></textarea>
+                              placeholder="{{ __('idea_room.idea_placeholder') }}" required></textarea>
 
                     <label for="idea-room-project">{{ __('idea_room.project_label') }}</label>
                     <select id="idea-room-project" name="projectId"
-                            @if (! ($canCreateProject ?? false)) required @endif
-                            @if (! ($providerConfigured ?? false)) disabled @endif>
+                            @if (! ($canCreateProject ?? false)) required @endif>
                         @if ($canCreateProject ?? false)
                             <option value="">{{ __('idea_room.blank_project') }}</option>
                         @else
@@ -53,7 +53,7 @@
 
                     <p class="idea-room-field-note">{{ __('idea_room.approval_note') }}</p>
                     <button type="submit" class="btn btn-primary"
-                            @if (! ($providerConfigured ?? false) || (! ($canCreateProject ?? false) && count($projects ?? []) === 0)) disabled @endif>
+                            @if (! ($canCreateProject ?? false) && count($projects ?? []) === 0) disabled @endif>
                         {{ __('idea_room.create_room') }}
                     </button>
                     <p class="idea-room-feedback" id="idea-room-create-feedback" role="alert" hidden></p>

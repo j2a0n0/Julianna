@@ -11,7 +11,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY . .
 RUN JULIANNA_VERSION="${JULIANNA_VERSION}" npx mix --production \
-    && node generateBlocklist.mjs
+    && JULIANNA_VERSION="${JULIANNA_VERSION}" node generateBlocklist.mjs
 
 
 FROM php:8.3-fpm-alpine@sha256:4574194a55e413b8eb799f4ac79233e5b7c3be30d49a7df62cf37187186fe659 AS php-build
@@ -112,6 +112,7 @@ COPY config ./config
 COPY database ./database
 COPY public ./public
 COPY composer.json composer.lock LICENSE NOTICE.md index.php ./
+COPY LICENSES ./LICENSES
 COPY --from=php-build /build/vendor ./vendor
 COPY --from=frontend /build/public/dist ./public/dist
 COPY --from=frontend /build/blocklist.json ./blocklist.json

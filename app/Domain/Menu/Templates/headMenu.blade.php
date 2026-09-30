@@ -153,12 +153,12 @@
     </li>
     <li>
         <a
-            href="{{ BASE_URL }}/dashboard/home"
+            href="{{ BASE_URL }}/agent"
             @if ($menuType == 'personal')
                 class="active"
             @endif
-            data-tippy-content="{{ __('popover.my_work') }}"
-        >{!! __('menu.my_work') !!}</a>
+            data-tippy-content="{{ __('agent_ui.intro') }}"
+        >{{ __('agent_ui.title') }}</a>
     </li>
     @if ($login::userIsAtLeast("manager", true))
         <li>

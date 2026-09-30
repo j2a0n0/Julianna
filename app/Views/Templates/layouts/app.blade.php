@@ -2,6 +2,9 @@
 <html dir="{{ __('language.direction') }}" lang="{{ __('language.code') }}">
 <head>
     @include('global::sections.header')
+    @if ((int) session('userdata.id') > 0)
+        @include('agentui::partials.drawer-styles')
+    @endif
     @stack('styles')
 </head>
 
@@ -22,7 +25,7 @@
 
                 <div class="logo">
                     <a
-                        href="{{ BASE_URL }}"
+                        href="{{ BASE_URL }}/agent"
                         style="background-image: url('{{ BASE_URL }}/dist/images/logo.svg')"
                     >&nbsp;</a>
                 </div>
@@ -59,6 +62,10 @@
 
     </div><!-- mainwrapper -->
 
+    @if ((int) session('userdata.id') > 0)
+        @include('agentui::partials.i18n')
+        @include('agentui::partials.drawer')
+    @endif
     @include('global::sections.pageBottom')
     @stack('scripts')
     @include('help::helpermodal')

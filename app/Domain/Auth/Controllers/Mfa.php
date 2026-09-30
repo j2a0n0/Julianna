@@ -64,7 +64,7 @@ final class Mfa extends Controller
         $this->tpl->assign('enrollment', $enrollment);
         $this->tpl->assign('secret', $secret);
         $this->tpl->assign('qrData', $qrData);
-        $this->tpl->assign('redirectUrl', (string) session('julianna_auth.redirect', BASE_URL.'/dashboard/home'));
+        $this->tpl->assign('redirectUrl', (string) session('julianna_auth.redirect', BASE_URL.'/agent'));
 
         return $this->tpl->display('auth.mfa', 'entry');
     }

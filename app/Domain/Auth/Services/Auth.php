@@ -300,7 +300,7 @@ class Auth implements Authenticatable
      */
     public function resolveSafeRedirect(?string $redirect): string
     {
-        $redirectUrl = BASE_URL.'/dashboard/home';
+        $redirectUrl = BASE_URL.'/agent';
 
         if ($redirect !== null && trim($redirect) !== '' && trim($redirect) !== '/') {
             // Normalize backslash-based protocol tricks (e.g. \/\/attacker.com)
@@ -339,10 +339,10 @@ class Auth implements Authenticatable
                 return $redirectUrl;
             }
 
-            // Guard: external absolute URL — reject.
-            // filter_var returns the URL (truthy) for well-formed absolute URLs
-            // with a scheme; relative paths return false.
-            if (filter_var($url, FILTER_VALIDATE_URL) !== false) {
+            // Guard: external absolute URL — reject. A scheme check also catches
+            // malformed absolute URLs that FILTER_VALIDATE_URL would miss.
+            if (preg_match('/\A[A-Za-z][A-Za-z0-9+.-]*:/', $url) === 1
+                || filter_var($url, FILTER_VALIDATE_URL) !== false) {
                 return $redirectUrl;
             }
 
@@ -367,10 +367,9 @@ class Auth implements Authenticatable
     /**
      * Resolve the post-MFA destination for the now-authenticated user.
      *
-     * The global dashboard is manager-only. Public signups may legitimately
-     * be approved as read-only, commenter, or editor users, so sending those
-     * accounts to the default dashboard would turn a successful first login
-     * into a 403. Explicit non-dashboard destinations remain untouched.
+     * Julianna's default destination is the agent command center, which is
+     * available to every authenticated role. The legacy global dashboard is
+     * manager-only, so lower roles requesting it still use their own profile.
      */
     public function resolveAuthenticatedRedirect(?string $redirect): string
     {

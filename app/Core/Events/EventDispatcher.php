@@ -5,7 +5,6 @@ namespace Leantime\Core\Events;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
@@ -503,15 +502,9 @@ class EventDispatcher implements Dispatcher
             return;
         }
 
-        if ((bool) config('debug') === false) {
-
-            $modules = Cache::store('installation')->rememberForever('domainEvents', function () {
-                return EventDispatcher::getDomainPaths();
-            });
-
-        } else {
-            $modules = self::getDomainPaths();
-        }
+        // Never reuse a cached list across image upgrades: new domain listeners
+        // (including scheduler hooks) must be discovered on the next request.
+        $modules = self::getDomainPaths();
 
         foreach ($modules as $module) {
             if (file_exists($moduleEventsPath = "$module/register.php")) {

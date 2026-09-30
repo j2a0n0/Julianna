@@ -14,3 +14,14 @@ The historical `Leantime\` PHP namespace, `leantime` JavaScript global, `leantim
 Julianna is not affiliated with, sponsored by, or endorsed by the Leantime project or its owners. Leantime names appearing in license notices, attribution, repository history, and source comments identify the origin of the modified work.
 
 This notice must be distributed with source and binary releases of Julianna.
+
+## Whiteboard dependency
+
+Julianna's first-party Whiteboard embeds `@excalidraw/excalidraw` 0.18.0 and
+its locally served fonts. Excalidraw is Copyright (c) 2020 Excalidraw and is
+licensed under the MIT License; its full copyright notice and terms are in
+`LICENSES/Excalidraw-MIT.txt` (upstream:
+https://github.com/excalidraw/excalidraw/blob/master/LICENSE). This dependency
+is separate from, and does not include, Leantime's commercial Whiteboards
+plugin. The package version and transitive dependencies are recorded in
+`package-lock.json`.

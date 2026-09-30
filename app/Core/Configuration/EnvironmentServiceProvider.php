@@ -24,9 +24,6 @@ class EnvironmentServiceProvider extends ServiceProvider
 
             return $settings;
         });
-        $this->app->singleton(
-            \Leantime\Core\Configuration\Environment::class, \Leantime\Core\Configuration\Environment::class);
-
     }
 
     public function boot()

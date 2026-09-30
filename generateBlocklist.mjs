@@ -3,7 +3,8 @@ import postcss from 'postcss';
 import selectorParser from 'postcss-selector-parser';
 
 const pjson = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
-const css = fs.readFileSync(`./public/dist/css/app.${pjson.version}.min.css`, 'utf-8');
+const version = process.env.JULIANNA_VERSION || pjson.version;
+const css = fs.readFileSync(`./public/dist/css/app.${version}.min.css`, 'utf-8');
 const classNames = new Set();
 
 const addClassIfMatches = (classNode) => {

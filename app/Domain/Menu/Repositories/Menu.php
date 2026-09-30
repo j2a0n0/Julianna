@@ -23,6 +23,7 @@ class Menu
     // Menu structures
     public array $menuStructures = [
         'default' => [
+            4 => ['type' => 'item', 'module' => 'agent', 'title' => 'agent_ui.title', 'icon' => 'fa fa-fw fa-sparkles', 'tooltip' => 'agent_ui.intro', 'href' => '/agent'],
             5 => ['type' => 'item', 'module' => 'dashboard', 'title' => 'menu.overview', 'icon' => 'fa fa-fw fa-gauge-high', 'tooltip' => 'menu.overview_tooltip', 'href' => '/dashboard/show', 'active' => ['show']],
             10 => [
                 'type' => 'submenu', 'id' => 'materialize', 'title' => 'menu.make', 'visual' => 'open',
@@ -36,7 +37,6 @@ class Menu
                 'type' => 'submenu', 'id' => 'understand', 'title' => 'menu.think', 'visual' => 'closed',
                 'submenu' => [
                     30 => ['type' => 'item', 'module' => 'ideas', 'title' => 'menu.ideas', 'icon' => 'fa fa-fw fa-lightbulb', 'tooltip' => 'menu.ideas_tooltip', 'href' => '', 'hrefFunction' => 'getIdeaMenu', 'active' => ['showBoards', 'advancedBoards']],
-                    35 => ['type' => 'item', 'module' => 'idea-room', 'title' => 'idea_room.title', 'icon' => 'fa fa-fw fa-lightbulb', 'tooltip' => 'idea_room.intro', 'href' => '/idea-room'],
                     50 => ['type' => 'item', 'module' => 'blueprints', 'title' => 'menu.blueprints', 'icon' => 'fa fa-fw fa-compass-drafting', 'tooltip' => 'menu.blueprints_tooltip', 'href' => '/blueprints/showBoards'],
                 ],
             ],
@@ -51,6 +51,7 @@ class Menu
         ],
         // Display all menu items
         'full_menu' => [
+            5 => ['type' => 'item', 'module' => 'agent', 'title' => 'agent_ui.title', 'icon' => 'fa fa-fw fa-sparkles', 'tooltip' => 'agent_ui.intro', 'href' => '/agent'],
             10 => [
                 'type' => 'submenu', 'id' => 'planning', 'title' => 'menu.planning_execution', 'visual' => 'open',
                 'submenu' => [
@@ -65,7 +66,6 @@ class Menu
                 'submenu' => [
                     51 => ['type' => 'item', 'module' => 'blueprints', 'icon' => 'far fa-fw fa-note-sticky', 'tooltip' => 'menu.insightscanvas_tooltip', 'title' => 'menu.insightscanvas', 'href' => '/blueprints/insights/showCanvas', 'active' => ['insights']],
                     52 => ['type' => 'item', 'module' => 'ideas', 'icon' => 'fa fa-fw fa-lightbulb', 'tooltip' => 'menu.ideas_tooltip', 'title' => 'menu.ideation', 'href' => '/ideas/showBoards'],
-                    53 => ['type' => 'item', 'module' => 'idea-room', 'icon' => 'fa fa-fw fa-lightbulb', 'tooltip' => 'idea_room.intro', 'title' => 'idea_room.title', 'href' => '/idea-room'],
                 ],
             ],
             60 => [
@@ -94,8 +94,8 @@ class Menu
             ],
         ],
         'personal' => [
-            5 => ['type' => 'item', 'module' => 'dashboard', 'title' => 'menu.sidemenu_home', 'icon' => 'fa fa-house', 'tooltip' => 'menu.overview_tooltip', 'href' => '/dashboard/home', 'active' => ['home']],
-            6 => ['type' => 'item', 'module' => 'idea-room', 'title' => 'idea_room.title', 'icon' => 'fa fa-lightbulb', 'tooltip' => 'idea_room.intro', 'href' => '/idea-room'],
+            5 => ['type' => 'item', 'module' => 'agent', 'title' => 'agent_ui.title', 'icon' => 'fa fa-sparkles', 'tooltip' => 'agent_ui.intro', 'href' => '/agent'],
+            6 => ['type' => 'item', 'module' => 'dashboard', 'title' => 'menu.sidemenu_home', 'icon' => 'fa fa-house', 'tooltip' => 'menu.overview_tooltip', 'href' => '/dashboard/home', 'active' => ['home']],
             7 => ['type' => 'item', 'module' => 'projects', 'title' => 'menu.sidemenu_my_project_hub', 'icon' => 'fa fa-solid fa-house-flag', 'tooltip' => 'menu.projecthub_tooltip', 'href' => '/projects/showMy', 'active' => ['showMy'], 'role' => 'editor'],
             15 => ['type' => 'item', 'module' => 'timesheets', 'title' => 'menu.sidemenu_my_timesheets', 'icon' => 'fa-clock', 'tooltip' => 'menu.my_timesheets_tooltip', 'href' => '/timesheets/showMy', 'active' => ['showMy']],
             20 => ['type' => 'item', 'module' => 'calendar', 'title' => 'menu.sidemenu_my_calendar', 'icon' => 'fa fa-calendar', 'tooltip' => 'menu.my_calendar_tooltip', 'href' => '/calendar/showMyCalendar', 'active' => ['showMyCalendar']],
@@ -411,7 +411,7 @@ class Menu
 
         $sections = [
             'dashboard.home' => 'personal',
-            'idea-room' => 'personal',
+            'agent' => 'personal',
             'projects.showMy' => 'personal',
             'timesheets.showMy' => 'personal',
             'calendar.showMyCalendar' => 'personal',
@@ -440,7 +440,7 @@ class Menu
 
         $sections = self::dispatch_filter('menuSections', $sections, ['currentRoute' => $currentRoute, 'default' => $default]);
 
-        $result = str_starts_with((string) $currentRoute, 'idea-room.')
+        $result = str_starts_with((string) $currentRoute, 'agent.')
             ? 'personal'
             : ($sections[$currentRoute] ?? $default);
 

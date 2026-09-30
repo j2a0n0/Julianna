@@ -4,7 +4,7 @@ namespace Leantime\Domain\Queue\Workers;
 
 use Illuminate\Support\Facades\Log;
 use Leantime\Domain\Queue\Repositories\Queue;
-use PHPUnit\Exception;
+use Throwable;
 
 class DefaultWorker
 {
@@ -12,9 +12,9 @@ class DefaultWorker
         private Queue $queue
     ) {}
 
-    public function handleQueue($messages)
+    public function handleQueue($messages): bool
     {
-
+        $allSucceeded = true;
         foreach ($messages as $message) {
             try {
                 $payload = safe_unserialize($message['message']);
@@ -26,17 +26,17 @@ class DefaultWorker
 
                 if ($result) {
                     $this->queue->deleteMessageInQueue($message['msghash']);
-
-                    return true;
                 } else {
-                    Log::error('Worker was not successful');
+                    Log::error('Default queue job returned an unsuccessful result.');
+                    $allSucceeded = false;
                 }
-
-            } catch (Exception $e) {
-                Log::error($e);
+            } catch (Throwable) {
+                // Job payloads may contain sensitive data; do not log the exception object.
+                Log::error('Default queue job failed.');
+                $allSucceeded = false;
             }
-
-            return false;
         }
+
+        return $allSucceeded;
     }
 }

@@ -64,6 +64,16 @@ class SchemaBuilder
         $this->createRolePermissionsTable();
         $this->createJuliannaAuthTables();
         $this->createIdeaRoomTables();
+        $this->createIdeaRoomChatTables();
+        $this->createIdeaRoomGraphTables();
+        $this->createIdeaRoomMcpColumns();
+        $this->createIdeaRoomHistoryTable();
+        $this->createProjectAgentTables();
+        $this->createWhiteboardTables();
+        $this->createAgentHarnessTables();
+        $this->createAgentActionClaimsTable();
+        $this->createAgentAiSettingsTable();
+        $this->createAgentWebSearchSettingsTable();
     }
 
     /**
@@ -1173,6 +1183,453 @@ class SchemaBuilder
                 $table->index(['room_id', 'id'], 'jim_room_id');
                 $table->foreign('room_id', 'jim_room_fk')
                     ->references('id')->on('julianna_idea_rooms')->cascadeOnDelete();
+            });
+        }
+    }
+
+    public function createIdeaRoomChatTables(): void
+    {
+        if (! Schema::hasColumn('julianna_idea_messages', 'metadata_json')) {
+            Schema::table('julianna_idea_messages', function (Blueprint $table): void {
+                $table->json('metadata_json')->nullable();
+            });
+        }
+
+        if (! Schema::hasTable('julianna_idea_events')) {
+            Schema::create('julianna_idea_events', function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('room_id');
+                $table->string('event_name', 64);
+                $table->json('payload_json');
+                $table->dateTime('created_at');
+                $table->index(['room_id', 'id'], 'jie_room_id');
+                $table->foreign('room_id', 'jie_room_fk')->references('id')->on('julianna_idea_rooms')->cascadeOnDelete();
+            });
+        }
+
+        if (! Schema::hasTable('julianna_idea_actions')) {
+            Schema::create('julianna_idea_actions', function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('room_id');
+                $table->string('tool_call_id', 255);
+                $table->string('tool_name', 128);
+                $table->json('arguments_json');
+                $table->string('status', 32);
+                $table->boolean('destructive');
+                $table->string('idempotency_key', 64)->unique();
+                $table->json('result_json')->nullable();
+                $table->dateTime('expires_at');
+                $table->dateTime('created_at');
+                $table->dateTime('updated_at');
+                $table->unique(['room_id', 'tool_call_id'], 'jia_room_call_unique');
+                $table->index(['room_id', 'status'], 'jia_room_status');
+                $table->foreign('room_id', 'jia_room_fk')->references('id')->on('julianna_idea_rooms')->cascadeOnDelete();
+            });
+        }
+
+        if (! Schema::hasTable('julianna_idea_generations')) {
+            Schema::create('julianna_idea_generations', function (Blueprint $table): void {
+                $table->unsignedBigInteger('room_id')->primary();
+                $table->string('status', 32);
+                $table->boolean('cancel_requested')->default(false);
+                $table->unsignedTinyInteger('tool_turns')->default(0);
+                $table->dateTime('updated_at');
+                $table->foreign('room_id', 'jig_room_fk')->references('id')->on('julianna_idea_rooms')->cascadeOnDelete();
+            });
+        }
+    }
+
+    public function createIdeaRoomGraphTables(): void
+    {
+        if (! Schema::hasColumn('julianna_idea_rooms', 'graph_version')) {
+            Schema::table('julianna_idea_rooms', function (Blueprint $table): void {
+                $table->unsignedInteger('graph_version')->default(0);
+            });
+        }
+        if (! Schema::hasColumn('julianna_idea_rooms', 'mode')) {
+            Schema::table('julianna_idea_rooms', function (Blueprint $table): void {
+                $table->string('mode', 16)->default('explore');
+            });
+        }
+        if (! Schema::hasTable('julianna_idea_graph_nodes')) {
+            Schema::create('julianna_idea_graph_nodes', function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('room_id');
+                $table->string('type', 32);
+                $table->string('title', 255);
+                $table->text('content');
+                $table->decimal('position_x', 10, 2);
+                $table->decimal('position_y', 10, 2);
+                $table->json('metadata_json');
+                $table->unsignedBigInteger('author_user_id');
+                $table->dateTime('created_at');
+                $table->dateTime('updated_at');
+                $table->index(['room_id', 'id'], 'jign_room_id');
+                $table->foreign('room_id', 'jign_room_fk')->references('id')->on('julianna_idea_rooms')->cascadeOnDelete();
+            });
+        }
+        if (! Schema::hasTable('julianna_idea_graph_links')) {
+            Schema::create('julianna_idea_graph_links', function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('room_id');
+                $table->unsignedBigInteger('source_node_id');
+                $table->unsignedBigInteger('target_node_id');
+                $table->string('type', 32);
+                $table->dateTime('created_at');
+                $table->dateTime('updated_at');
+                $table->index(['room_id', 'id'], 'jigl_room_id');
+                $table->index(['source_node_id', 'target_node_id'], 'jigl_endpoints');
+                $table->foreign('room_id', 'jigl_room_fk')->references('id')->on('julianna_idea_rooms')->cascadeOnDelete();
+                $table->foreign('source_node_id', 'jigl_source_fk')->references('id')->on('julianna_idea_graph_nodes')->cascadeOnDelete();
+                $table->foreign('target_node_id', 'jigl_target_fk')->references('id')->on('julianna_idea_graph_nodes')->cascadeOnDelete();
+            });
+        }
+        if (! Schema::hasTable('julianna_idea_sources')) {
+            Schema::create('julianna_idea_sources', function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('room_id');
+                $table->string('url', 2048);
+                $table->string('title', 255);
+                $table->text('snippet');
+                $table->string('domain', 255);
+                $table->string('provider', 64);
+                $table->string('query', 500);
+                $table->dateTime('created_at');
+                $table->index(['room_id', 'id'], 'jis_room_id');
+                $table->foreign('room_id', 'jis_room_fk')->references('id')->on('julianna_idea_rooms')->cascadeOnDelete();
+            });
+        }
+        if (! Schema::hasTable('julianna_idea_proposals')) {
+            Schema::create('julianna_idea_proposals', function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('room_id');
+                $table->unsignedBigInteger('author_user_id');
+                $table->string('status', 24);
+                $table->unsignedInteger('graph_version');
+                $table->json('patch_json');
+                $table->json('inspiration_cards_json');
+                $table->dateTime('created_at');
+                $table->dateTime('updated_at');
+                $table->index(['room_id', 'status', 'id'], 'jip_room_status');
+                $table->foreign('room_id', 'jip_room_fk')->references('id')->on('julianna_idea_rooms')->cascadeOnDelete();
+            });
+        }
+    }
+
+    /** Versioned, recoverable review state for agent-authored Idea Room changes. */
+    public function createIdeaRoomMcpColumns(): void
+    {
+        if (! Schema::hasColumn('julianna_idea_rooms', 'plan_version')) {
+            Schema::table('julianna_idea_rooms', static function (Blueprint $table): void {
+                $table->unsignedInteger('plan_version')->default(0);
+            });
+        }
+        if (! Schema::hasColumn('julianna_idea_graph_nodes', 'deleted_at')) {
+            Schema::table('julianna_idea_graph_nodes', static function (Blueprint $table): void {
+                $table->dateTime('deleted_at')->nullable();
+            });
+        }
+        if (! Schema::hasColumn('julianna_idea_graph_links', 'deleted_at')) {
+            Schema::table('julianna_idea_graph_links', static function (Blueprint $table): void {
+                $table->dateTime('deleted_at')->nullable();
+            });
+        }
+        if (! Schema::hasColumn('julianna_idea_graph_links', 'deleted_with_node')) {
+            Schema::table('julianna_idea_graph_links', static function (Blueprint $table): void {
+                $table->boolean('deleted_with_node')->default(false);
+            });
+        }
+        if (! Schema::hasColumn('julianna_idea_proposals', 'origin')) {
+            Schema::table('julianna_idea_proposals', static function (Blueprint $table): void {
+                $table->string('origin', 16)->default('chat');
+            });
+        }
+        if (! Schema::hasColumn('julianna_idea_proposals', 'summary')) {
+            Schema::table('julianna_idea_proposals', static function (Blueprint $table): void {
+                $table->string('summary', 255)->default('');
+            });
+        }
+        if (! Schema::hasColumn('julianna_idea_proposals', 'plan_version')) {
+            Schema::table('julianna_idea_proposals', static function (Blueprint $table): void {
+                $table->unsignedInteger('plan_version')->default(0);
+            });
+        }
+    }
+
+    /** Durable, room-scoped snapshots used for canvas and plan undo. */
+    public function createIdeaRoomHistoryTable(): void
+    {
+        if (Schema::hasTable('julianna_idea_history')) {
+            return;
+        }
+
+        Schema::create('julianna_idea_history', static function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('room_id');
+            $table->unsignedBigInteger('author_user_id');
+            $table->string('origin', 16);
+            $table->string('summary', 255);
+            $table->unsignedInteger('graph_version');
+            $table->unsignedInteger('plan_version');
+            $table->json('graph_json');
+            $table->json('plan_json');
+            $table->dateTime('created_at');
+            $table->index(['room_id', 'id'], 'jih_room_id');
+            $table->foreign('room_id', 'jih_room_fk')->references('id')->on('julianna_idea_rooms')->cascadeOnDelete();
+        });
+    }
+
+    /**
+     * Per-project agent controls, idempotent background review runs, and an
+     * append-only account of actions visible in the command center. These
+     * tables deliberately do not cascade with zp_projects: an audit trail must
+     * not disappear when a project is deleted.
+     */
+    public function createProjectAgentTables(): void
+    {
+        if (! Schema::hasTable('julianna_agent_projects')) {
+            Schema::create('julianna_agent_projects', static function (Blueprint $table): void {
+                $table->unsignedBigInteger('project_id')->primary();
+                $table->boolean('enabled')->default(false);
+                $table->boolean('paused')->default(false);
+                $table->unsignedBigInteger('enabled_by_user_id')->nullable();
+                $table->dateTime('created_at');
+                $table->dateTime('updated_at');
+                $table->index(['enabled', 'paused'], 'jap_active');
+            });
+        }
+
+        if (! Schema::hasTable('julianna_agent_runs')) {
+            Schema::create('julianna_agent_runs', static function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('project_id');
+                $table->unsignedBigInteger('actor_user_id');
+                $table->string('trigger', 32);
+                $table->char('idempotency_key', 64);
+                $table->string('status', 32);
+                $table->string('summary', 255)->nullable();
+                $table->dateTime('created_at');
+                $table->dateTime('started_at')->nullable();
+                $table->dateTime('heartbeat_at')->nullable();
+                $table->dateTime('finished_at')->nullable();
+                $table->unique('idempotency_key', 'jar_key_unique');
+                $table->index(['project_id', 'id'], 'jar_project_id');
+                $table->index(['status', 'created_at'], 'jar_status_created');
+            });
+        }
+
+        if (! Schema::hasTable('julianna_agent_activities')) {
+            Schema::create('julianna_agent_activities', static function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('project_id');
+                $table->unsignedBigInteger('actor_user_id');
+                $table->unsignedBigInteger('run_id')->nullable();
+                $table->string('action', 128);
+                $table->text('rationale');
+                $table->text('outcome');
+                $table->string('status', 24);
+                $table->json('recovery_json')->nullable();
+                $table->char('idempotency_key', 64)->nullable();
+                $table->dateTime('created_at');
+                $table->dateTime('undone_at')->nullable();
+                $table->unsignedBigInteger('undone_by_user_id')->nullable();
+                $table->unique('idempotency_key', 'jaa_key_unique');
+                $table->index(['project_id', 'id'], 'jaa_project_id');
+                $table->index(['run_id', 'id'], 'jaa_run_id');
+            });
+        }
+    }
+
+    /**
+     * Julianna-owned Whiteboards. Scenes contain element/app-state metadata;
+     * binary files are stored once in the immutable asset table and referenced
+     * by file ID from each durable scene revision.
+     */
+    public function createWhiteboardTables(): void
+    {
+        if (! Schema::hasTable('julianna_whiteboards')) {
+            Schema::create('julianna_whiteboards', static function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('project_id');
+                $table->string('title', 160);
+                $table->unsignedInteger('revision')->default(0);
+                $table->json('scene_json');
+                $table->unsignedBigInteger('created_by_user_id');
+                $table->unsignedBigInteger('updated_by_user_id');
+                $table->dateTime('created_at');
+                $table->dateTime('updated_at');
+                $table->index(['project_id', 'id'], 'jwb_project_id');
+            });
+        }
+
+        if (! Schema::hasTable('julianna_whiteboard_revisions')) {
+            Schema::create('julianna_whiteboard_revisions', static function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('board_id');
+                $table->unsignedInteger('revision');
+                $table->json('scene_json');
+                $table->unsignedBigInteger('author_user_id');
+                $table->dateTime('created_at');
+                $table->unique(['board_id', 'revision'], 'jwbr_board_revision');
+                $table->index(['board_id', 'id'], 'jwbr_board_id');
+            });
+        }
+
+        if (! Schema::hasTable('julianna_whiteboard_assets')) {
+            Schema::create('julianna_whiteboard_assets', static function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('board_id');
+                $table->string('file_id', 128);
+                $table->string('mime_type', 80);
+                $table->longText('data_url');
+                $table->unsignedBigInteger('byte_size');
+                $table->dateTime('created_at');
+                $table->unique(['board_id', 'file_id'], 'jwba_board_file');
+                $table->index(['board_id', 'id'], 'jwba_board_id');
+            });
+        }
+    }
+
+    /** Agent records survive project deletion so actions remain auditable. */
+    public function createAgentHarnessTables(): void
+    {
+        if (! Schema::hasTable('julianna_agent_conversations')) {
+            Schema::create('julianna_agent_conversations', static function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('owner_user_id');
+                $table->unsignedBigInteger('project_id')->nullable();
+                $table->string('title', 255);
+                $table->string('state', 24)->default('idle');
+                $table->string('page_path', 512)->nullable();
+                $table->dateTime('created_at');
+                $table->dateTime('updated_at');
+                $table->index(['owner_user_id', 'id'], 'jac_owner_id');
+                $table->index(['project_id', 'id'], 'jac_project_id');
+            });
+        }
+
+        if (! Schema::hasTable('julianna_agent_turns')) {
+            Schema::create('julianna_agent_turns', static function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('conversation_id');
+                $table->string('role', 16);
+                $table->longText('content');
+                $table->json('metadata_json')->nullable();
+                $table->char('client_key', 64)->nullable();
+                $table->dateTime('created_at');
+                $table->unique(['conversation_id', 'client_key'], 'jat_client_key');
+                $table->index(['conversation_id', 'id'], 'jat_conversation_id');
+            });
+        }
+
+        if (! Schema::hasTable('julianna_agent_tool_receipts')) {
+            Schema::create('julianna_agent_tool_receipts', static function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('conversation_id');
+                $table->unsignedBigInteger('actor_user_id');
+                $table->unsignedBigInteger('project_id')->nullable();
+                $table->string('tool_call_id', 256);
+                $table->string('tool_name', 64);
+                $table->char('arguments_hash', 64);
+                $table->string('effect', 32);
+                $table->string('status', 24);
+                $table->json('result_json')->nullable();
+                $table->dateTime('created_at');
+                $table->dateTime('finished_at')->nullable();
+                $table->unique(['conversation_id', 'tool_call_id'], 'jatr_call_unique');
+                $table->index(['project_id', 'id'], 'jatr_project_id');
+            });
+        }
+
+        if (! Schema::hasTable('julianna_agent_drafts')) {
+            Schema::create('julianna_agent_drafts', static function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('conversation_id');
+                $table->unsignedBigInteger('project_id');
+                $table->unsignedBigInteger('actor_user_id');
+                $table->string('tool_name', 64);
+                $table->json('arguments_json');
+                $table->text('reason');
+                $table->string('status', 24)->default('draft');
+                $table->dateTime('created_at');
+                $table->dateTime('updated_at');
+                $table->index(['project_id', 'status', 'id'], 'jad_project_status');
+            });
+        }
+
+        if (! Schema::hasTable('julianna_agent_questions')) {
+            Schema::create('julianna_agent_questions', static function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('conversation_id');
+                $table->unsignedBigInteger('project_id')->nullable();
+                $table->longText('question');
+                $table->string('status', 24)->default('open');
+                $table->dateTime('created_at');
+                $table->dateTime('resolved_at')->nullable();
+                $table->index(['project_id', 'status', 'id'], 'jaq_project_status');
+            });
+        }
+    }
+
+    /** Cross-run claims prevent daily and event reviews from repeating an action. */
+    public function createAgentActionClaimsTable(): void
+    {
+        if (! Schema::hasTable('julianna_agent_action_claims')) {
+            Schema::create('julianna_agent_action_claims', static function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('project_id');
+                $table->unsignedBigInteger('actor_user_id');
+                $table->string('tool_name', 64);
+                $table->char('action_key', 64)->unique();
+                $table->string('status', 24);
+                $table->dateTime('created_at');
+                $table->dateTime('finished_at')->nullable();
+                $table->index(['project_id', 'id'], 'jaac_project_id');
+            });
+        }
+    }
+
+    /** One encrypted, installation-wide AI connector owned by Julianna. */
+    public function createAgentAiSettingsTable(): void
+    {
+        if (Schema::hasTable('julianna_agent_ai_settings')) {
+            return;
+        }
+
+        Schema::create('julianna_agent_ai_settings', static function (Blueprint $table): void {
+            $table->unsignedInteger('id')->primary();
+            $table->string('provider', 32)->nullable();
+            $table->string('model', 128)->nullable();
+            $table->text('encrypted_api_key')->nullable();
+            $table->unsignedBigInteger('updated_by_user_id');
+            $table->dateTime('created_at');
+            $table->dateTime('updated_at');
+        });
+    }
+
+    /** Separate encrypted web-search credential so configuring it cannot alter the AI provider. */
+    public function createAgentWebSearchSettingsTable(): void
+    {
+        if (Schema::hasTable('julianna_agent_web_search_settings')) {
+            return;
+        }
+
+        Schema::create('julianna_agent_web_search_settings', static function (Blueprint $table): void {
+            $table->unsignedInteger('id')->primary();
+            $table->boolean('enabled');
+            $table->text('encrypted_api_key')->nullable();
+            $table->unsignedBigInteger('updated_by_user_id');
+            $table->dateTime('created_at');
+            $table->dateTime('updated_at');
+        });
+    }
+
+    /** Existing queued-run tables gain a worker heartbeat without replaying work. */
+    public function addProjectAgentRunHeartbeat(): void
+    {
+        if (Schema::hasTable('julianna_agent_runs') && ! Schema::hasColumn('julianna_agent_runs', 'heartbeat_at')) {
+            Schema::table('julianna_agent_runs', static function (Blueprint $table): void {
+                $table->dateTime('heartbeat_at')->nullable()->after('started_at');
             });
         }
     }

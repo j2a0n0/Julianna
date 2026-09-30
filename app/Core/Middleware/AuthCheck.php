@@ -34,7 +34,6 @@ class AuthCheck
         'help.about',
         'install',
         'install.index',
-        'install.update',
         'errors.error404',
         'errors.error500',
         'api.i18n',
@@ -66,7 +65,7 @@ class AuthCheck
         // Throttle credential brute force on token-authenticated endpoints (/api, /mcp). This
         // must live here rather than in RequestRateLimiter: that middleware runs AFTER AuthCheck,
         // so a failed-auth 401 short-circuits the pipeline before any request limit is counted.
-        if ($request instanceof ApiRequest && $this->tooManyFailedAuthAttempts($request)) {
+        if (($request instanceof ApiRequest || $request->isMcpRequest()) && $this->tooManyFailedAuthAttempts($request)) {
             return new Response(
                 json_encode(['error' => 'Too many failed authentication attempts. Try again later.']),
                 Response::HTTP_TOO_MANY_REQUESTS
@@ -138,6 +137,12 @@ class AuthCheck
 
     protected function authenticateApi($request, array $guards)
     {
+        // MCP is token-only. A browser cookie must never satisfy an external MCP
+        // request, including one that supplies an invalid Authorization header.
+        if ($request->isMcpRequest()) {
+            return $this->authenticateMcpToken($request);
+        }
+
         foreach ($guards as $guard) {
             try {
                 if ($this->auth->guard($guard)->check()) {
@@ -180,6 +185,44 @@ class AuthCheck
                 // resolver: leaving $request->user() null lets AuthenticateSession bail instead of
                 // calling viaRemember() on the non-session WebGuard, matching the x-api-key path.
                 app(\Leantime\Domain\Api\Services\Api::class)->setApiUserSession($user, true);
+
+                return true;
+            }
+        }
+
+        $this->hitFailedAuthLimiter($request);
+
+        return new Response(json_encode(['error' => 'Unauthorized']), 401);
+    }
+
+    protected function authenticateMcpToken(IncomingRequest $request): bool|Response
+    {
+        $apiKey = trim((string) $request->headers->get('x-api-key', ''));
+        if ($apiKey !== '') {
+            $user = app(\Leantime\Domain\Api\Services\Api::class)->getAPIKeyUser($apiKey);
+            if (is_array($user) && ! empty($user['id'])) {
+                // The global AuthenticateSession middleware is for browser
+                // credentials. MCP uses the token-built userdata only.
+                $request->setUserResolver(static fn () => null);
+
+                return true;
+            }
+        }
+
+        $authorization = $request instanceof ApiRequest
+            ? $request->getAuthorizationHeader()
+            : (string) ($request->headers->get('Authorization')
+                ?: $request->headers->get('HTTP_AUTHORIZATION')
+                ?: $request->headers->get('REDIRECT_HTTP_AUTHORIZATION')
+                ?: '');
+        $bearer = preg_match('/^Bearer\s+([^\s]+)$/i', trim($authorization), $matches) === 1
+            ? $matches[1]
+            : null;
+        if (is_string($bearer) && $bearer !== '') {
+            $user = app(\Leantime\Domain\Auth\Services\Auth::class)->getUserByToken($bearer);
+            if (is_array($user) && ! empty($user['id'])) {
+                app(\Leantime\Domain\Api\Services\Api::class)->setApiUserSession($user, true);
+                $request->setUserResolver(static fn () => null);
 
                 return true;
             }

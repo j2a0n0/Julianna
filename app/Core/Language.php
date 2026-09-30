@@ -202,16 +202,17 @@ class Language
      */
     public function readIni(): array
     {
-        if (@Cache::store('installation')->has('languages.lang_'.$this->language)) {
+        $cacheKey = $this->languageCacheKey();
+        if (@Cache::store('installation')->has($cacheKey)) {
             $this->ini_array = self::dispatchFilter(
                 'language_resources',
-                Cache::store('installation')->get('languages.lang_'.$this->language),
+                Cache::store('installation')->get($cacheKey),
                 [
                     'language' => $this->language,
                 ]
-            ) ?? Cache::store('installation')->get('languages.lang_'.$this->language);
+            ) ?? Cache::store('installation')->get($cacheKey);
 
-            Cache::store('installation')->set('languages.lang_'.$this->language, $this->ini_array);
+            Cache::store('installation')->set($cacheKey, $this->ini_array);
 
             return $this->ini_array;
         }
@@ -246,9 +247,18 @@ class Language
             ]
         );
 
-        Cache::store('installation')->set('languages.lang_'.$this->language, $this->ini_array);
+        Cache::store('installation')->set($cacheKey, $this->ini_array);
 
         return $this->ini_array;
+    }
+
+    /** Change cache identity when either shipped catalog changes between images. */
+    private function languageCacheKey(): string
+    {
+        $english = @filemtime(self::DEFAULT_LANG_FOLDER.'en-US.ini') ?: 0;
+        $selected = @filemtime(self::DEFAULT_LANG_FOLDER.$this->language.'.ini') ?: 0;
+
+        return 'languages.lang_'.$this->language.'.'.$english.'.'.$selected;
     }
 
     /**

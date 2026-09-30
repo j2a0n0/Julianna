@@ -2,7 +2,6 @@
 
 namespace Leantime\Core\Routing;
 
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 use Leantime\Core\Auth\Permissions\CheckPermissions;
 use Leantime\Core\Configuration\Environment;
@@ -41,13 +40,10 @@ class RouteLoader
      */
     private static function loadDomainRoutes(): void
     {
-        if ((bool) config('debug') === false) {
-            $domainPaths = Cache::store('installation')->rememberForever('domainRoutes', function () {
-                return self::getDomainPaths();
-            });
-        } else {
-            $domainPaths = self::getDomainPaths();
-        }
+        // The installation cache outlived image upgrades and silently omitted
+        // newly added first-party domains. A domain glob is cheap and must reflect
+        // the code in the currently running image.
+        $domainPaths = self::getDomainPaths();
 
         // Routes inherit the permission-enforcement middleware so #[RequiresPermission] on a
         // native controller action is honored without per-route `can:` declarations.

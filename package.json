@@ -4,6 +4,7 @@
   "description": "Self-hosted project and work management for focused teams",
   "dependencies": {
     "@assuradeurengilde/fontawesome-iconpicker": "^3.2.3",
+    "@excalidraw/excalidraw": "0.18.0",
     "@fortawesome/fontawesome-free": "^6.5.2",
     "@fullcalendar/google-calendar": "^6.1.13",
     "@fullcalendar/icalendar": "^6.1.20",
@@ -72,6 +73,8 @@
     "mermaid": "^11.12.3",
     "moment": "^2.29.4",
     "packery": "^2.1.2",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
     "shepherd.js": "^11.2.0",
     "tippy.js": "^6.3.7",
     "tiptap-extension-font-size": "^1.2.0",
